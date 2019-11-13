@@ -85,4 +85,21 @@ class SyncWpToStatic
       #{content}
     MARKDOWN
   end
+
+  def add_files_to_repo(repo, files = {})
+    latest_commit_sha = client.ref(repo, 'heads/master').object.sha
+    base_tree_sha = client.commit(repo, latest_commit_sha).commit.tree.sha
+
+    new_tree = files.map do |path, content|
+      Hash(
+        path: path,
+        mode: '100644',
+        type: 'blob',
+        sha: client.create_blob(repo, content, 'base64')
+      )
+    end
+
+    new_tree_sha = client.create_tree(repo, new_tree, base_tree: base_tree_sha).sha
+    new_commit_sha = client.create_commit(repo, 'New WP sync\'d post', new_tree_sha, latest_commit_sha).sha
+    client.update_ref(repo, 'heads/master', new_commit_sha)
 end

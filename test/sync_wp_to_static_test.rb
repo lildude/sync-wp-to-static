@@ -98,6 +98,31 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/full_post.md'))
     assert_equal expected, SyncWpToStatic.new.markdown_content(faux_post)
   end
+
+  def test_add_files_to_repo
+    stub_request(:any, /api.github.com/)
+      .to_return(
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub ref
+          body: JSON.generate(object: { sha: 'abc1234567890xyz' }) },
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub commit
+          body: JSON.generate(commit: { tree: { sha: 'abc1234567890xyz' } }) },
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub create_tree
+          body: JSON.generate(sha: 'abc1234567890xyz') },
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub commit_commit
+          body: JSON.generate(sha: 'abc1234567890xyz') },
+        status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub update_ref
+        body: JSON.generate(
+          url: 'https://api.github.com/repos/lildude.github.io/git/refs/heads/master',
+          object: { sha: 'abc1234567890xyz' }
+        )
+      )
+
+    files = {
+      '_posts/2010-01-14-FOOOBAAR.md': 'TVkgU0VDUkVUIEhBUyBCRUVOIFJFVkVBTEVEIPCfmJw='
+    }
+    assert res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
+    assert_equal res['object']['sha'], 'abc1234567890xyz'
+  end
   def test_it_works
     obj = SyncWpToStatic.new
     assert obj
