@@ -53,4 +53,36 @@ class SyncWpToStatic
 
     true
   end
+
+  # TODO: reimplement this to pull in a user-specified ERB template
+  def markdown_content(post)
+    tags = post.tags
+    tags = parse_hashtags(post.content.rendered) if tags.empty?
+
+    unless tags.empty?
+      tags_array = %w[tags:]
+      tags.each do |tag|
+        next if %w[run tech].include? tag
+
+        tags_array << tag
+      end
+      tags_fm = tags_array.join("\n- ")
+    end
+
+    title = "title: #{post.title.rendered}" unless post.title.rendered.empty?
+    content = ReverseMarkdown.convert(post.content.rendered.gsub(/#\w+/, ''))
+    date = DateTime.parse(post.date).strftime('%F %T %z')
+    layout = post.format == 'aside' ? 'note' : 'post'
+    <<~MARKDOWN.chomp
+      ---
+      layout: #{layout}
+      date: #{date}
+      type: #{post.type}
+      #{tags_fm}
+      #{title}
+      ---
+
+      #{content}
+    MARKDOWN
+  end
 end

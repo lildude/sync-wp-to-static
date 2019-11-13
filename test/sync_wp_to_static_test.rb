@@ -76,6 +76,28 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'BAARFOOO')
     refute SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'FOOOBAAR')
   end
+
+  def test_markdown_content
+    faux_post = JSON.parse(
+      {
+        title: { rendered: '' },
+        date: '2019-11-08T16:33:20',
+        tags: [],
+        format: 'aside',
+        type: 'post',
+        content: { rendered: '<p>Content with <strong>bold</strong> HTML and 😁 emoji.</p><p>Another line.</p>' }
+      }.to_json, object_class: OpenStruct
+    )
+
+    expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/note_post_no_tags.md'))
+    assert_equal expected, SyncWpToStatic.new.markdown_content(faux_post)
+
+    faux_post.tags = %w[foo boo goo]
+    faux_post.title.rendered = 'Title of my Cool Post'
+
+    expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/full_post.md'))
+    assert_equal expected, SyncWpToStatic.new.markdown_content(faux_post)
+  end
   def test_it_works
     obj = SyncWpToStatic.new
     assert obj
