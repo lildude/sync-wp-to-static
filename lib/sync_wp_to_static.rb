@@ -46,4 +46,11 @@ class SyncWpToStatic
 
     "#{fn}.md"
   end
+
+  def repo_has_post?(repo, filename)
+    res = client.search_code("filename:#{filename} repo:#{repo} path:_posts")
+    return false if res.total_count.zero?
+
+    true
+  end
 end

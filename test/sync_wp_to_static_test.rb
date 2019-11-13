@@ -64,6 +64,18 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     faux_post.title.rendered = 'Foo Bar gOO DaR'
     assert_equal '2019-11-08-foo-bar-goo-dar.md', SyncWpToStatic.new.filename(faux_post)
   end
+
+  def test_repo_has_post
+    stub_request(:get, /api.github.com/)
+      .to_return(
+        { status: 200, headers: { 'Content-Type' => 'application/json' },
+          body: JSON.generate(total_count: 1) },
+        status: 200, headers: { 'Content-Type' => 'application/json' },
+        body: JSON.generate(total_count: 0)
+      )
+    assert SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'BAARFOOO')
+    refute SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'FOOOBAAR')
+  end
   def test_it_works
     obj = SyncWpToStatic.new
     assert obj
