@@ -4,7 +4,7 @@ require 'colorize'
 require 'date'
 require 'json'
 require 'octokit'
-require 'open-uri'
+require 'httparty'
 
 # Class that syncs Wordpress posts to a static site's GitHub repo
 class SyncWpToStatic
@@ -16,5 +16,16 @@ class SyncWpToStatic
     raise 'Missing auth env vars for tokens' unless ENV['WORDPRESS_TOKEN'] && ENV['WORDPRESS_ENDPOINT'] && ENV['GITHUB_TOKEN']
 
     true
+  end
+
+  def wp_posts
+    @wp_posts ||=
+      begin
+        uri = "#{ENV['WORDPRESS_ENDPOINT']}/posts"
+        response = HTTParty.get(uri, format: :plain, raise_on: [400, 403, 404, 500])
+        JSON.parse(response, object_class: OpenStruct)
+      rescue HTTParty::ResponseError => e
+        raise "Problem accessing #{uri}: #{e.message}"
+      end
   end
 end
