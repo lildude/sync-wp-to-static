@@ -28,4 +28,8 @@ class SyncWpToStatic
         raise "Problem accessing #{uri}: #{e.message}"
       end
   end
+
+  def parse_hashtags(string)
+    string.scan(/#(\w+)/).flatten
+  end
 end

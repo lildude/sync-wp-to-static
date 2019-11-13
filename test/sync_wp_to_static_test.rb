@@ -52,6 +52,11 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     MSG
     assert_equal expected_message, exception.message
   end
+
+  def test_parse_hashtags
+    assert_equal %w[foo boo goo], SyncWpToStatic.new.parse_hashtags('String #foo with #boo hash #goo tags.')
+    assert_equal [], SyncWpToStatic.new.parse_hashtags('String without hash tags.')
+  end
   def test_it_works
     obj = SyncWpToStatic.new
     assert obj
