@@ -32,4 +32,18 @@ class SyncWpToStatic
   def parse_hashtags(string)
     string.scan(/#(\w+)/).flatten
   end
+
+  # Use a slugified title or a number based on the date if no title
+  def filename(post)
+    date = DateTime.parse(post.date)
+    fn =
+      if post.title.rendered.empty?
+        date.strftime('%s').to_i % (24 * 60 * 60)
+      else
+        slug = post.title.rendered.downcase.gsub('/[\s.\/_]/', ' ').gsub(/[^\w\s-]/, '').squeeze(' ').tr(' ', '-').chomp('-')
+        "#{date.strftime('%F')}-#{slug}"
+      end
+
+    "#{fn}.md"
+  end
 end
