@@ -28,6 +28,16 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert_kind_of Octokit::Client, SyncWpToStatic.new.client
     assert_equal '0987654321', SyncWpToStatic.new.client.access_token
   end
+
+  def test_tokens
+    assert SyncWpToStatic.new.tokens?
+
+    ENV['WORDPRESS_TOKEN'] = nil
+    ENV['GITHUB_TOKEN'] = nil
+
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.tokens? }
+    assert_match 'Missing auth env vars for tokens', exception.message
+  end
   def test_it_works
     obj = SyncWpToStatic.new
     assert obj

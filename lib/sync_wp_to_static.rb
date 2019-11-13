@@ -12,4 +12,9 @@ class SyncWpToStatic
     @client ||= Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
   end
 
+  def tokens?
+    raise 'Missing auth env vars for tokens' unless ENV['WORDPRESS_TOKEN'] && ENV['WORDPRESS_ENDPOINT'] && ENV['GITHUB_TOKEN']
+
+    true
+  end
 end
