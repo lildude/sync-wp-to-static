@@ -8,4 +8,8 @@ require 'open-uri'
 
 # Class that syncs Wordpress posts to a static site's GitHub repo
 class SyncWpToStatic
+  def client
+    @client ||= Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
+  end
+
 end
