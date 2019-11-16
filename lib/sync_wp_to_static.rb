@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 require 'colorize'
@@ -142,3 +143,15 @@ end
     "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
   end
 end
+
+# :nocov:
+#### All the action happens here ####
+if $PROGRAM_NAME == __FILE__
+  begin
+    puts SyncWpToStatic.new.run
+  rescue RuntimeError => e
+    warn "Error: #{e}".red
+    exit 1
+  end
+end
+# :nocov:
