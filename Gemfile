@@ -11,6 +11,7 @@ gem 'reverse_markdown'
 group :test, :development do
   gem 'coveralls', '~> 0.8.0', require: false
   gem 'minitest'
+  gem 'mocha'
   gem 'pry'
   gem 'rubocop', require: false
   gem 'simplecov', require: false
