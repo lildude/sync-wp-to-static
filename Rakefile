@@ -8,6 +8,7 @@ task default: 'test'
 # rake test
 Rake::TestTask.new do |task|
   task.pattern = 'test/*_test.rb'
+  task.warning = false
 end
 
 # rake rubocop
