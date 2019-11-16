@@ -116,3 +116,31 @@ end
       raise "Problem deleting post: Code #{e.response.code} - #{e.response.message}"
     end
   end
+
+  def run
+    # Check we have tokens
+    tokens?
+    # Get all Wordpress posts - assumes there aren't many so we don't bother with paging
+    return 'Nothing new'.blue if wp_posts.empty?
+
+    markdown_files = {}
+    wp_pids = []
+    github_repo = ENV['WORDPRESS_REPO']
+    wp_posts.each do |post|
+      github_repo = repo(parse_hashtags(post.content.rendered))
+      post_filename = filename(post)
+      # Next if we have a post in GitHub repo already
+      next if repo_has_post?(github_repo, post_filename)
+
+      markdown_files[post_filename] = Base64.encode64(markdown_content(post))
+      wp_pids << post.id
+    end
+
+    # Add posts to repo in one commit
+    add_files_to_repo(github_repo, markdown_files)
+    # Remove Wordpress posts
+    delete_wp_posts(wp_pids)
+
+    "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
+  end
+end
