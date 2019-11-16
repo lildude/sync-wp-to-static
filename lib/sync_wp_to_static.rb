@@ -5,6 +5,7 @@ require 'date'
 require 'json'
 require 'octokit'
 require 'httparty'
+require 'reverse_markdown'
 
 # Class that syncs Wordpress posts to a static site's GitHub repo
 class SyncWpToStatic

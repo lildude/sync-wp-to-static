@@ -5,6 +5,8 @@ ruby '~> 2.6.3'
 
 gem 'colorize'
 gem 'octokit'
+gem 'httparty'
+gem 'reverse_markdown'
 
 group :test, :development do
   gem 'coveralls', '~> 0.8.0', require: false
