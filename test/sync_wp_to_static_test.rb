@@ -127,7 +127,6 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   end
 
   def test_delete_wp_posts
-    skip "TBC"
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
     assert SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
@@ -170,17 +169,18 @@ class SyncWpToStaticRunTest < Minitest::Test
       format: 'aside',
       type: 'post',
       date: '2019-11-08T16:33:20',
-      content: { rendered: 'Post content #run'},
+        content: { rendered: 'Post content #run' }
     },
     {
       id: 102,
       title: { rendered: 'This is a fantastic title' },
-      tags: ['tag1', 'tag2'],
+        tags: %w[tag1 tag2],
       format: 'post',
       type: 'post',
       date: '2019-11-09T15:31:19',
-      content: { rendered: 'Post content with tags and title.'},
-    }]
+        content: { rendered: 'Post content with tags and title.' }
+      }
+    ]
     # Stub getting WP posts
     stub_request(:get, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(faux_posts), headers: {})

@@ -4,8 +4,8 @@ source 'https://rubygems.org'
 ruby '~> 2.6.3'
 
 gem 'colorize'
-gem 'octokit'
 gem 'httparty'
+gem 'octokit'
 gem 'reverse_markdown'
 
 group :test, :development do

@@ -106,7 +106,6 @@ class SyncWpToStatic
 end
 
   def delete_wp_posts(post_ids)
-    begin
       headers = { 'Authorization': "Bearer #{ENV['WORDPRESS_TOKEN']}" }
       post_ids.each do |pid|
         uri = "#{ENV['WORDPRESS_ENDPOINT']}/posts/#{pid}"
@@ -115,7 +114,6 @@ end
     rescue HTTParty::ResponseError => e
       raise "Problem deleting post: Code #{e.response.code} - #{e.response.message}"
     end
-  end
 
   def run
     # Check we have tokens
