@@ -123,6 +123,22 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
     assert_equal res['object']['sha'], 'abc1234567890xyz'
   end
+
+  def test_delete_wp_posts
+    skip "TBC"
+    stub_request(:delete, /foobar.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate(results: []), headers: {})
+    assert SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
+
+    stub_request(:delete, /foobar.wordpress.com/)
+      .to_raise(HTTParty::ResponseError.new('404 Not Found'))
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.delete_wp_posts([11]) }
+    expected_message = <<~MSG.chomp
+      Problem deleting post: Code 404 - Not found
+    MSG
+    assert_equal expected_message, exception.message
+  end
+
   def test_it_works
     obj = SyncWpToStatic.new
     assert obj
