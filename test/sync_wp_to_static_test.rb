@@ -22,6 +22,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'
     ENV['GITHUB_REPO'] = 'lildude/lildude.github.io'
+    ENV['POST_TEMPLATE'] = 'template.erb'
     ENV['WORDPRESS_TOKEN'] = '1234567890'
     ENV['WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
   end
@@ -154,6 +155,7 @@ class SyncWpToStaticRunTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'
     ENV['GITHUB_REPO'] = 'lildude/lildude.github.io'
+    ENV['POST_TEMPLATE'] = 'template.erb'
     ENV['WORDPRESS_TOKEN'] = '1234567890'
     ENV['WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
   end

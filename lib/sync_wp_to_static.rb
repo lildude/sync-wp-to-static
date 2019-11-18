@@ -62,7 +62,7 @@ class SyncWpToStatic
     render_binding = binding
     post.tags = parse_hashtags(post.content.rendered) if post.tags.empty?
     content = ReverseMarkdown.convert(post.content.rendered.gsub(/#\w+/, '')) # rubocop:disable Lint/UselessAssignment
-    template = File.read('template.erb')
+    template = File.read(ENV['POST_TEMPLATE'])
 
     ERB.new(template, trim_mode: '-').result(render_binding)
   end
@@ -125,7 +125,7 @@ end
 end
 
 # :nocov:
-#### All the action happens here ####
+#### All the action happens here but is fully tested indepentely above. ####
 if $PROGRAM_NAME == __FILE__
   begin
     puts SyncWpToStatic.new.run
