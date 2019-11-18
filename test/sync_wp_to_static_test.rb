@@ -47,10 +47,11 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert_equal [], SyncWpToStatic.new.wp_posts
 
     stub_request(:get, /fundiworks.wordpress.com/)
-      .to_raise(HTTParty::ResponseError.new('404 Not Found'))
+      .to_return(status: 404, body: JSON.generate(code: 'invalid_site', message: 'Invalid site specified', data: { status: 404 }))
+      .to_raise(HTTParty::ResponseError.new(''))
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.wp_posts }
     expected_message = <<~MSG.chomp
-      Problem accessing #{ENV['WORDPRESS_ENDPOINT']}/posts: 404 Not Found
+      Problem accessing #{ENV['WORDPRESS_ENDPOINT']}/posts: Invalid site specified
     MSG
     assert_equal expected_message, exception.message
   end
@@ -132,10 +133,13 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
 
     stub_request(:delete, /fundiworks.wordpress.com/)
-      .to_raise(HTTParty::ResponseError.new('404 Not Found'))
+      .to_return(status: 404, body: JSON.generate(
+        code: 'rest_post_invalid_id', message: 'Invalid post ID.', data: { status: 404 }
+      ))
+      .to_raise(HTTParty::ResponseError.new(''))
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.delete_wp_posts([11]) }
     expected_message = <<~MSG.chomp
-      Problem deleting post: Code 404 - Not found
+      Problem deleting post: Invalid post ID.
     MSG
     assert_equal expected_message, exception.message
   end

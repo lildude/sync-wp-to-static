@@ -27,7 +27,8 @@ class SyncWpToStatic
         response = HTTParty.get(uri, format: :plain, raise_on: [400, 403, 404, 500])
         JSON.parse(response, object_class: OpenStruct)
       rescue HTTParty::ResponseError => e
-        raise "Problem accessing #{uri}: #{e.message}"
+        body = JSON.parse(e.response.body, object_class: OpenStruct)
+        raise "Problem accessing #{uri}: #{body.message}"
       end
   end
 
@@ -113,7 +114,8 @@ end
         HTTParty.delete(uri, headers: headers, raise_on: [403, 404, 500])
       end
     rescue HTTParty::ResponseError => e
-      raise "Problem deleting post: Code #{e.response.code} - #{e.response.message}"
+    body = JSON.parse(e.response.body, object_class: OpenStruct)
+    raise "Problem deleting post: #{body.message}"
     end
 
   def run
