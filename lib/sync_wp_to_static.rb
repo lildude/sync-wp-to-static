@@ -104,7 +104,7 @@ end
 
     markdown_files = {}
     wp_pids = []
-    github_repo = ENV['WORDPRESS_REPO']
+    github_repo = ENV['GITHUB_REPOSITORY']
     wp_posts.each do |post|
       github_repo = repo(parse_hashtags(post.content.rendered))
       post_filename = filename(post)
