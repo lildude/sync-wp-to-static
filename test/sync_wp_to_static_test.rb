@@ -80,7 +80,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     refute SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'FOOOBAAR')
   end
 
-  def test_markdown_content
+  def test_render_template
     faux_post = JSON.parse(
       {
         title: { rendered: '' },
@@ -93,13 +93,13 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     )
 
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/note_post_no_tags.md'))
-    assert_equal expected, SyncWpToStatic.new.markdown_content(faux_post)
+    assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
 
     faux_post.tags = %w[foo boo goo]
     faux_post.title.rendered = 'Title of my Cool Post'
 
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/full_post.md'))
-    assert_equal expected, SyncWpToStatic.new.markdown_content(faux_post)
+    assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
   end
 
   def test_add_files_to_repo
@@ -153,6 +153,7 @@ end
 class SyncWpToStaticRunTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'
+    ENV['GITHUB_REPO'] = 'lildude/lildude.github.io'
     ENV['WORDPRESS_TOKEN'] = '1234567890'
     ENV['WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
   end
