@@ -98,8 +98,12 @@ class SyncWpToStaticMethodsTest < Minitest::Test
 
     faux_post.tags = %w[foo boo goo]
     faux_post.title.rendered = 'Title of my Cool Post'
-
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/full_post.md'))
+    assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
+
+    faux_post.tags = []
+    faux_post.content.rendered = '<p>Content with <strong>bold</strong> HTML and 😁 emoji.</p><p>Another line. #foo #boo #goo</p>'
+    expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/note_post_hashtags.md'))
     assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
   end
 
