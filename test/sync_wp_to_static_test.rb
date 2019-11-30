@@ -12,7 +12,7 @@ end
 
 require 'minitest/autorun'
 require 'minitest/pride'
-require 'mocha/mini_test'
+require 'mocha/minitest'
 require 'webmock/minitest'
 require './lib/sync_wp_to_static'
 
