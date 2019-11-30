@@ -6,7 +6,7 @@ require 'rubocop/rake_task'
 task default: 'test'
 
 # rake test
-Rake::TestTask.new do |task|
+Rake::TestTask.new(:test) do |task|
   task.pattern = 'test/*_test.rb'
   task.warning = false
 end
