@@ -13,6 +13,7 @@ group :test, :development do
   gem 'minitest'
   gem 'mocha'
   gem 'pry'
+  gem 'rake'
   gem 'rubocop', require: false
   gem 'simplecov', require: false
   gem 'webmock'
