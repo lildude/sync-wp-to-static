@@ -3,8 +3,6 @@ FROM ruby:2.6-alpine
 ENV LC_ALL C.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
-ENV GEM_HOME="/usr/local/bundle"
-ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 
 RUN apk add --update --no-cache build-base --quiet
 

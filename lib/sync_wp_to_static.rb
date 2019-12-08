@@ -13,9 +13,18 @@ class SyncWpToStatic
     @client ||= Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
   end
 
-  def tokens?
-    raise 'Missing auth env vars for tokens' unless ENV['WORDPRESS_TOKEN'] && ENV['WORDPRESS_ENDPOINT'] && ENV['GITHUB_TOKEN']
+  def configured?
+    missing_tokens = []
+    %w(WORDPRESS_TOKEN WORDPRESS_ENDPOINT GITHUB_TOKEN POST_TEMPLATE).each do |env_var|
+      missing_tokens << env_var unless ENV[env_var]
+    end
 
+    msg = <<~EOF
+    Whoops! Looks like you've not finished configuring things.
+    Missing: #{missing_tokens.join(', ')} environment variables."
+    EOF
+
+    raise msg unless missing_tokens.empty?
     true
   end
 
@@ -96,7 +105,7 @@ class SyncWpToStatic
 
   def run
     # Check we have tokens
-    tokens?
+    configured?
     # Get all Wordpress posts - assumes there aren't many so we don't bother with paging
     return 'Nothing new'.blue if wp_posts.empty?
 
