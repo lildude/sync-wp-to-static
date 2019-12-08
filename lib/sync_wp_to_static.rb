@@ -83,18 +83,18 @@ class SyncWpToStatic
     new_tree_sha = client.create_tree(repo, new_tree, base_tree: base_tree_sha).sha
     new_commit_sha = client.create_commit(repo, 'New WP sync\'d post', new_tree_sha, latest_commit_sha).sha
     client.update_ref(repo, 'heads/master', new_commit_sha)
-end
+  end
 
   def delete_wp_posts(post_ids)
-      headers = { 'Authorization': "Bearer #{ENV['WORDPRESS_TOKEN']}" }
-      post_ids.each do |pid|
-        uri = "#{ENV['WORDPRESS_ENDPOINT']}/posts/#{pid}"
-        HTTParty.delete(uri, headers: headers, raise_on: [403, 404, 500])
-      end
-    rescue HTTParty::ResponseError => e
+    headers = { 'Authorization': "Bearer #{ENV['WORDPRESS_TOKEN']}" }
+    post_ids.each do |pid|
+      uri = "#{ENV['WORDPRESS_ENDPOINT']}/posts/#{pid}"
+      HTTParty.delete(uri, headers: headers, raise_on: [403, 404, 500])
+    end
+  rescue HTTParty::ResponseError => e
     body = JSON.parse(e.response.body, object_class: OpenStruct)
     raise "Problem deleting post: #{body.message}"
-    end
+  end
 
   def run
     # Check we have tokens
@@ -106,7 +106,12 @@ end
     wp_pids = []
     github_repo = ENV['GITHUB_REPOSITORY']
     wp_posts.each do |post|
-      github_repo = repo(parse_hashtags(post.content.rendered))
+      tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
+      next if ENV['EXCLUDE_TAGGED'] && tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(',').any? { |x| t == x } }
+      if ENV['INCLUDE_TAGGED']
+        next unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(',').any? { |x| t == x } }
+      end
+
       post_filename = filename(post)
       # Next if we have a post in GitHub repo already
       next if repo_has_post?(github_repo, post_filename)
