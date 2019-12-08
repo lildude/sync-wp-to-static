@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'colorize'
 require 'date'
 require 'erb'
@@ -15,16 +16,17 @@ class SyncWpToStatic
 
   def configured?
     missing_tokens = []
-    %w(WORDPRESS_TOKEN WORDPRESS_ENDPOINT GITHUB_TOKEN POST_TEMPLATE).each do |env_var|
+    %w[WORDPRESS_TOKEN WORDPRESS_ENDPOINT GITHUB_TOKEN POST_TEMPLATE].each do |env_var|
       missing_tokens << env_var unless ENV[env_var]
     end
 
-    msg = <<~EOF
-    Whoops! Looks like you've not finished configuring things.
-    Missing: #{missing_tokens.join(', ')} environment variables."
-    EOF
+    msg = <<~ERROR_MSG
+      Whoops! Looks like you've not finished configuring things.
+      Missing: #{missing_tokens.join(', ')} environment variables."
+    ERROR_MSG
 
     raise msg unless missing_tokens.empty?
+
     true
   end
 
@@ -115,6 +117,7 @@ class SyncWpToStatic
     wp_posts.each do |post|
       tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
       next if ENV['EXCLUDE_TAGGED'] && tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(',').any? { |x| t == x } }
+
       if ENV['INCLUDE_TAGGED']
         next unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(',').any? { |x| t == x } }
       end

@@ -11,11 +11,11 @@ gem 'reverse_markdown'
 group :test, :development do
   gem 'coveralls', '~> 0.8.0', require: false
   gem 'minitest'
+  gem 'minitest-stub-const', require: false
   gem 'mocha'
   gem 'pry'
   gem 'rake'
   gem 'rubocop', require: false
   gem 'simplecov', require: false
-  gem 'minitest-stub-const', require: false
   gem 'webmock'
 end

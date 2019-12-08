@@ -239,11 +239,12 @@ class SyncWpToStaticRunTest < Minitest::Test
     # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
     stub_request(:get, /api.github.com/)
       .to_return(
-        { status: 200, headers: { 'Content-Type' => 'application/json' },
-          body: JSON.generate(total_count: 0) }
+        status: 200,
+        headers: { 'Content-Type' => 'application/json' },
+        body: JSON.generate(total_count: 0)
       )
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge("INCLUDE_TAGGED" => "run")) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('INCLUDE_TAGGED': 'run')) do
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns
@@ -280,11 +281,12 @@ class SyncWpToStaticRunTest < Minitest::Test
     # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
     stub_request(:get, /api.github.com/)
       .to_return(
-        { status: 200, headers: { 'Content-Type' => 'application/json' },
-          body: JSON.generate(total_count: 0) }
+        status: 200,
+        headers: { 'Content-Type' => 'application/json' },
+        body: JSON.generate(total_count: 0)
       )
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge("EXCLUDE_TAGGED" => "run")) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('EXCLUDE_TAGGED': 'run')) do
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns
