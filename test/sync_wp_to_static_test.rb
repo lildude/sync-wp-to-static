@@ -14,6 +14,7 @@ require 'minitest/autorun'
 require 'minitest/pride'
 require 'mocha/minitest'
 require 'webmock/minitest'
+require 'minitest/stub_const'
 require './lib/sync_wp_to_static'
 
 ENV['RACK_ENV'] ||= 'test'
@@ -173,22 +174,22 @@ class SyncWpToStaticRunTest < Minitest::Test
 
   def test_run_all_the_types_of_posts
     faux_posts = [
-    {
-      id: 101,
-      title: { rendered: '' },
-      tags: [],
-      format: 'aside',
-      type: 'post',
-      date: '2019-11-08T16:33:20',
+      {
+        id: 101,
+        title: { rendered: '' },
+        tags: [],
+        format: 'aside',
+        type: 'post',
+        date: '2019-11-08T16:33:20',
         content: { rendered: 'Post content #run' }
-    },
-    {
-      id: 102,
-      title: { rendered: 'This is a fantastic title' },
+      },
+      {
+        id: 102,
+        title: { rendered: 'This is a fantastic title' },
         tags: %w[tag1 tag2],
-      format: 'post',
-      type: 'post',
-      date: '2019-11-09T15:31:19',
+        format: 'post',
+        type: 'post',
+        date: '2019-11-09T15:31:19',
         content: { rendered: 'Post content with tags and title.' }
       }
     ]
@@ -209,5 +210,86 @@ class SyncWpToStaticRunTest < Minitest::Test
     runit.expects(:delete_wp_posts).returns
     expected = "Sync'd Wordpress posts 102 to GitHub lildude/lildude.github.io".green
     assert_equal expected, runit.run
+  end
+
+  def test_sync_only_included
+    faux_posts = [
+      {
+        id: 101,
+        title: { rendered: '' },
+        tags: [],
+        format: 'aside',
+        type: 'post',
+        date: '2019-11-08T16:33:20',
+        content: { rendered: 'Post content #run' }
+      },
+      {
+        id: 102,
+        title: { rendered: 'This is a fantastic title' },
+        tags: %w[tag1 tag2],
+        format: 'post',
+        type: 'post',
+        date: '2019-11-09T15:31:19',
+        content: { rendered: 'Post content with tags and title.' }
+      }
+    ]
+    # Stub getting WP posts
+    stub_request(:get, /fundiworks.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate(faux_posts), headers: {})
+    # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
+    stub_request(:get, /api.github.com/)
+      .to_return(
+        { status: 200, headers: { 'Content-Type' => 'application/json' },
+          body: JSON.generate(total_count: 0) }
+      )
+    # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
+    Object.stub_const(:ENV, ENV.to_hash.merge("INCLUDE_TAGGED" => "run")) do
+      runit = SyncWpToStatic.new
+      runit.expects(:add_files_to_repo).returns
+      runit.expects(:delete_wp_posts).returns
+      expected = "Sync'd Wordpress posts 101 to GitHub lildude/lildude.github.io".green
+      assert_equal expected, runit.run
+    end
+  end
+
+  def test_dont_sync_excluded
+    faux_posts = [
+      {
+        id: 101,
+        title: { rendered: '' },
+        tags: [],
+        format: 'aside',
+        type: 'post',
+        date: '2019-11-08T16:33:20',
+        content: { rendered: 'Post content #run' }
+      },
+      {
+        id: 102,
+        title: { rendered: 'This is a fantastic title' },
+        tags: %w[tag1 tag2],
+        format: 'post',
+        type: 'post',
+        date: '2019-11-09T15:31:19',
+        content: { rendered: 'Post content with tags and title.' }
+      }
+    ]
+
+    # Stub getting WP posts
+    stub_request(:get, /fundiworks.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate(faux_posts), headers: {})
+    # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
+    stub_request(:get, /api.github.com/)
+      .to_return(
+        { status: 200, headers: { 'Content-Type' => 'application/json' },
+          body: JSON.generate(total_count: 0) }
+      )
+    # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
+    Object.stub_const(:ENV, ENV.to_hash.merge("EXCLUDE_TAGGED" => "run")) do
+      runit = SyncWpToStatic.new
+      runit.expects(:add_files_to_repo).returns
+      runit.expects(:delete_wp_posts).returns
+      expected = "Sync'd Wordpress posts 102 to GitHub lildude/lildude.github.io".green
+      assert_equal expected, runit.run
+    end
   end
 end

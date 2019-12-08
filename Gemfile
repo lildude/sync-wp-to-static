@@ -16,5 +16,6 @@ group :test, :development do
   gem 'rake'
   gem 'rubocop', require: false
   gem 'simplecov', require: false
+  gem 'minitest-stub-const', require: false
   gem 'webmock'
 end

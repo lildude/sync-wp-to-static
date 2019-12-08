@@ -30,6 +30,7 @@ GEM
     mime-types-data (3.2019.1009)
     mini_portile2 (2.4.0)
     minitest (5.13.0)
+    minitest-stub-const (0.6)
     mocha (1.9.0)
       metaclass (~> 0.0.1)
     multi_xml (0.6.0)
@@ -84,6 +85,7 @@ DEPENDENCIES
   coveralls (~> 0.8.0)
   httparty
   minitest
+  minitest-stub-const
   mocha
   octokit
   pry
