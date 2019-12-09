@@ -244,7 +244,7 @@ class SyncWpToStaticRunTest < Minitest::Test
         body: JSON.generate(total_count: 0)
       )
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge('INCLUDE_TAGGED': 'run')) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('INCLUDE_TAGGED' => 'run')) do
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns
@@ -272,6 +272,15 @@ class SyncWpToStaticRunTest < Minitest::Test
         type: 'post',
         date: '2019-11-09T15:31:19',
         content: { rendered: 'Post content with tags and title.' }
+      },
+      {
+        id: 103,
+        title: { rendered: 'This is a fantastic title too' },
+        tags: %w[tag1 tech],
+        format: 'post',
+        type: 'post',
+        date: '2019-11-09T15:31:19',
+        content: { rendered: 'Post content with tags and title.' }
       }
     ]
 
@@ -286,7 +295,7 @@ class SyncWpToStaticRunTest < Minitest::Test
         body: JSON.generate(total_count: 0)
       )
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge('EXCLUDE_TAGGED': 'run')) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('EXCLUDE_TAGGED' => 'run, tech')) do
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns

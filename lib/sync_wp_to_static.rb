@@ -116,10 +116,12 @@ class SyncWpToStatic
     github_repo = ENV['GITHUB_REPOSITORY']
     wp_posts.each do |post|
       tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
-      next if ENV['EXCLUDE_TAGGED'] && tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(',').any? { |x| t == x } }
+      if ENV['EXCLUDE_TAGGED']
+        next if tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
+      end
 
       if ENV['INCLUDE_TAGGED']
-        next unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(',').any? { |x| t == x } }
+        next unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
       end
 
       post_filename = filename(post)
