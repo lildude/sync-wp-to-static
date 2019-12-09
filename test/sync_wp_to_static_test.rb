@@ -165,6 +165,12 @@ class SyncWpToStaticRunTest < Minitest::Test
     ENV['WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
   end
 
+  def test_run_runtime_error
+    ENV['GITHUB_TOKEN'] = nil
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.run }
+    assert_match "Error: Whoops! Looks like you've not finished configuring things.", exception.message
+  end
+
   def test_run_no_posts
     stub_request(:get, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate([]), headers: {})

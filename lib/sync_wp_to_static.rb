@@ -138,17 +138,7 @@ class SyncWpToStatic
     delete_wp_posts(wp_pids)
 
     "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
-  end
-end
-
-# :nocov:
-#### All the action happens here but is fully tested indepentely above. ####
-if $PROGRAM_NAME == __FILE__
-  begin
-    puts SyncWpToStatic.new.run
   rescue RuntimeError => e
-    warn "Error: #{e}".red
-    exit 1
+    raise "Error: #{e}".red
   end
 end
-# :nocov:
