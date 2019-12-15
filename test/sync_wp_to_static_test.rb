@@ -131,12 +131,22 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     }
     assert res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
     assert_equal res['object']['sha'], 'abc1234567890xyz'
+
+    Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
+      res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
+      assert_equal res, "Would add _posts/2010-01-14-FOOOBAAR.md to lildude/lildude.github.io".yellow
+    end
   end
 
   def test_delete_wp_posts
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
     assert SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
+
+    Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
+      assert output = SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
+      assert_equal output, "Would delete Wordpress posts 11, 12, 13, 14".yellow
+    end
 
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 404, body: JSON.generate(
@@ -148,6 +158,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
       Problem deleting post: Invalid post ID.
     MSG
     assert_equal expected_message, exception.message
+
   end
 
   def test_it_works

@@ -77,6 +77,8 @@ class SyncWpToStatic
   end
 
   def add_files_to_repo(repo, files = {})
+    return "Would add #{files.keys.join(', ')} to #{repo}".yellow if ENV['DRY_RUN']
+
     latest_commit_sha = client.ref(repo, 'heads/master').object.sha
     base_tree_sha = client.commit(repo, latest_commit_sha).commit.tree.sha
 
@@ -95,6 +97,8 @@ class SyncWpToStatic
   end
 
   def delete_wp_posts(post_ids)
+    return "Would delete Wordpress posts #{post_ids.join(', ')}".yellow if ENV['DRY_RUN']
+
     headers = { 'Authorization': "Bearer #{ENV['WORDPRESS_TOKEN']}" }
     post_ids.each do |pid|
       uri = "#{ENV['WORDPRESS_ENDPOINT']}/posts/#{pid}"
