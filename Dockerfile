@@ -10,8 +10,10 @@ WORKDIR /app
 
 COPY Gemfile Gemfile.lock ./
 COPY vendor/cache ./vendor/cache
-RUN gem install bundler --no-document
-RUN bundle install --deployment --local --jobs 4 --quiet --without development test
+RUN gem install bundler --no-document && \
+    bundle config set deployment 'true' && \
+    bundle config set without 'development test'
+RUN bundle install --local --jobs 4
 
 COPY . .
 
