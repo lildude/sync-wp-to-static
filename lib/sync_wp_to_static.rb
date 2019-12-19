@@ -43,7 +43,7 @@ class SyncWpToStatic
   end
 
   def parse_hashtags(string)
-    string.scan(/#(\w+)/).flatten
+    string.scan(/\s+#(\w+)/).flatten
   end
 
   # Use a slugified title or a number based on the date if no title
