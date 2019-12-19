@@ -109,6 +109,19 @@ class SyncWpToStatic
     raise "Problem deleting post: #{body.message}"
   end
 
+  def include_post?(post)
+    ok = true
+    tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
+    if ENV['EXCLUDE_TAGGED']
+      ok = false if tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
+    end
+
+    if ENV['INCLUDE_TAGGED']
+      ok = false unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
+    end
+    ok
+  end
+
   def run
     # Check we have tokens
     configured?
@@ -119,14 +132,7 @@ class SyncWpToStatic
     wp_pids = []
     github_repo = ENV['GITHUB_REPOSITORY']
     wp_posts.each do |post|
-      tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
-      if ENV['EXCLUDE_TAGGED']
-        next if tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
-      end
-
-      if ENV['INCLUDE_TAGGED']
-        next unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
-      end
+      next unless include_post?(post)
 
       post_filename = filename(post)
       # Next if we have a post in GitHub repo already
