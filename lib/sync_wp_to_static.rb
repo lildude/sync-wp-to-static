@@ -136,6 +136,8 @@ class SyncWpToStatic
       wp_pids << post.id
     end
 
+    return 'Nothing to post'.blue if markdown_files.empty?
+
     # Add posts to repo in one commit
     add_files_to_repo(github_repo, markdown_files)
     # Remove Wordpress posts
