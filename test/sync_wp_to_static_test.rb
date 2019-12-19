@@ -131,10 +131,33 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     }
     assert res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
     assert_equal res['object']['sha'], 'abc1234567890xyz'
+  end
+
+  def test_add_files_to_repo_dry_run
+    stub_request(:any, /api.github.com/)
+      .to_return(
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub ref
+          body: JSON.generate(object: { sha: 'abc1234567890xyz' }) },
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub commit
+          body: JSON.generate(commit: { tree: { sha: 'abc1234567890xyz' } }) },
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub create_tree
+          body: JSON.generate(sha: 'abc1234567890xyz') },
+        { status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub commit_commit
+          body: JSON.generate(sha: 'abc1234567890xyz') },
+        status: 200, headers: { 'Content-Type' => 'application/json' }, # Stub update_ref
+        body: JSON.generate(
+          url: 'https://api.github.com/repos/lildude.github.io/git/refs/heads/master',
+          object: { sha: 'abc1234567890xyz' }
+        )
+      )
+
+    files = {
+      '_posts/2010-01-14-FOOOBAAR.md': 'TVkgU0VDUkVUIEhBUyBCRUVOIFJFVkVBTEVEIPCfmJw='
+    }
 
     Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
       res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
-      assert_equal res, "Would add _posts/2010-01-14-FOOOBAAR.md to lildude/lildude.github.io".yellow
+      assert_equal res, 'Would add _posts/2010-01-14-FOOOBAAR.md to lildude/lildude.github.io'.yellow
     end
   end
 
@@ -142,11 +165,6 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
     assert SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
-
-    Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
-      assert output = SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
-      assert_equal output, "Would delete Wordpress posts 11, 12, 13, 14".yellow
-    end
 
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 404, body: JSON.generate(
@@ -158,7 +176,16 @@ class SyncWpToStaticMethodsTest < Minitest::Test
       Problem deleting post: Invalid post ID.
     MSG
     assert_equal expected_message, exception.message
+  end
 
+  def test_delete_wp_posts_dry_run
+    stub_request(:delete, /fundiworks.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate(results: []), headers: {})
+
+    Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
+      assert output = SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
+      assert_equal output, 'Would delete Wordpress posts 11, 12, 13, 14'.yellow
+    end
   end
 
   def test_it_works
@@ -179,7 +206,7 @@ class SyncWpToStaticRunTest < Minitest::Test
   def test_run_runtime_error
     ENV['GITHUB_TOKEN'] = nil
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.run }
-    assert_match "Error: Whoops! Looks like you've not finished configuring things.", exception.message
+    assert_match 'Whoops! Looks like you\'ve not finished configuring things.', exception.message
   end
 
   def test_run_no_posts
