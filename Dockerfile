@@ -17,4 +17,4 @@ RUN bundle install --local --jobs 4
 
 COPY . .
 
-CMD bin/run
+ENTRYPOINT [ "bin/run" ]
