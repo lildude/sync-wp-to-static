@@ -17,4 +17,4 @@ RUN bundle install --local --jobs 4
 
 COPY . .
 
-CMD bundle exec ruby lib/sync_wp_to_static.rb
+CMD bin/run
