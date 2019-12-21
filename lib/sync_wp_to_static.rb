@@ -145,11 +145,12 @@ class SyncWpToStatic
     return 'Nothing to post'.blue if markdown_files.empty?
 
     # Add posts to repo in one commit
-    add_files_to_repo(github_repo, markdown_files)
+    out = [] << add_files_to_repo(github_repo, markdown_files).to_s
     # Remove Wordpress posts
-    delete_wp_posts(wp_pids)
+    out << delete_wp_posts(wp_pids).to_s
 
-    "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
+    out << "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
+    out.reject(&:empty?).join("\n")
   end
 end
 
