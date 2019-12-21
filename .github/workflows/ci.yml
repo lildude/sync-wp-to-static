@@ -17,10 +17,12 @@ jobs:
     - name: Set up Ruby
       uses: actions/setup-ruby@v1
       with:
-        ruby-version: 2.6.3
+        ruby-version: 2.6
     - name: Install Dependencies
       run: |
         gem install bundler --no-document
         bundle install --jobs 4 --local --deployment
     - name: Run tests
-      run: rake test
+      run: bundle exec rake test
+    - name: Rubocop
+      run: bundle exec rake rubocop
