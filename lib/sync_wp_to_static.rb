@@ -153,15 +153,3 @@ class SyncWpToStatic
     out.reject(&:empty?).join("\n")
   end
 end
-
-# :nocov:
-#### All the action happens here but is fully tested independently above. ####
-if $PROGRAM_NAME == __FILE__
-  begin
-    puts SyncWpToStatic.new.run
-  rescue RuntimeError => e
-    warn "Error: #{e}".red
-    exit 1
-  end
-end
-# :nocov:
