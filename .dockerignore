@@ -5,4 +5,5 @@
 coverage
 LICENSE
 README.md
-script
+test
+Rakefile
