@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.6.3
+  TargetRubyVersion: 2.6
   DisplayCopNames: true
   DisplayStyleGuide: true
   ExtraDetails: true
@@ -20,6 +20,6 @@ Metrics/MethodLength:
     - 'test/**/*'
 
 Metrics/ClassLength:
-  Max: 110
+  Max: 120
   Exclude:
     - 'test/**/*'
