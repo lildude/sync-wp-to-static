@@ -20,6 +20,6 @@ Metrics/MethodLength:
     - 'test/**/*'
 
 Metrics/ClassLength:
-  Max: 120
+  Max: 125
   Exclude:
     - 'test/**/*'

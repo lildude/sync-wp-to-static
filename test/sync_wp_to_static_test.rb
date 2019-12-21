@@ -30,36 +30,36 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   end
 
   def test_client
-    assert_kind_of Octokit::Client, SyncWpToStatic.new.client
-    assert_equal '0987654321', SyncWpToStatic.new.client.access_token
+    assert_kind_of Octokit::Client, SyncWpToStatic.new.send(:client)
+    assert_equal '0987654321', SyncWpToStatic.new.send(:client).access_token
   end
 
   def test_configured
-    assert SyncWpToStatic.new.configured?
+    assert SyncWpToStatic.new.send(:configured?)
 
     ENV['WORDPRESS_TOKEN'] = nil
     ENV['GITHUB_TOKEN'] = nil
 
-    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.configured? }
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:configured?) }
     assert_match "Whoops! Looks like you've not finished configuring things", exception.message
   end
 
   def test_template_found
     ENV['POST_TEMPLATE'] = 'foobar.erb'
 
-    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.template_found? }
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:template_found?) }
     assert_match 'Whoops! foobar.erb not found.', exception.message
   end
 
   def test_wp_posts
     stub_request(:get, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate([]), headers: {})
-    assert_equal [], SyncWpToStatic.new.wp_posts
+    assert_equal [], SyncWpToStatic.new.send(:wp_posts)
 
     stub_request(:get, /fundiworks.wordpress.com/)
       .to_return(status: 404, body: JSON.generate(code: 'invalid_site', message: 'Invalid site specified', data: { status: 404 }))
       .to_raise(HTTParty::ResponseError.new(''))
-    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.wp_posts }
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:wp_posts) }
     expected_message = <<~MSG.chomp
       Problem accessing #{ENV['WORDPRESS_ENDPOINT']}/posts: Invalid site specified
     MSG
@@ -67,15 +67,15 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   end
 
   def test_parse_hashtags
-    assert_equal %w[foo boo goo], SyncWpToStatic.new.parse_hashtags('String #foo with #boo hash #goo tags.')
-    assert_equal [], SyncWpToStatic.new.parse_hashtags('String without hash tags.')
+    assert_equal %w[foo boo goo], SyncWpToStatic.new.send(:parse_hashtags, 'String #foo with #boo hash #goo tags.')
+    assert_equal [], SyncWpToStatic.new.send(:parse_hashtags, 'String without hash tags.')
   end
 
   def test_filename
     faux_post = JSON.parse({ 'title' => { 'rendered' => '' }, 'date' => '2019-11-08T16:33:20' }.to_json, object_class: OpenStruct)
-    assert_equal '59600.md', SyncWpToStatic.new.filename(faux_post)
+    assert_equal '59600.md', SyncWpToStatic.new.send(:filename, faux_post)
     faux_post.title.rendered = 'Foo Bar gOO DaR'
-    assert_equal '2019-11-08-foo-bar-goo-dar.md', SyncWpToStatic.new.filename(faux_post)
+    assert_equal '2019-11-08-foo-bar-goo-dar.md', SyncWpToStatic.new.send(:filename, faux_post)
   end
 
   def test_repo_has_post
@@ -86,8 +86,8 @@ class SyncWpToStaticMethodsTest < Minitest::Test
         status: 200, headers: { 'Content-Type' => 'application/json' },
         body: JSON.generate(total_count: 0)
       )
-    assert SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'BAARFOOO')
-    refute SyncWpToStatic.new.repo_has_post?('lildude/lildude.github.io', 'FOOOBAAR')
+    assert SyncWpToStatic.new.send(:repo_has_post?, 'lildude/lildude.github.io', 'BAARFOOO')
+    refute SyncWpToStatic.new.send(:repo_has_post?, 'lildude/lildude.github.io', 'FOOOBAAR')
   end
 
   def test_render_template
@@ -103,17 +103,17 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     )
 
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/note_post_no_tags.md'))
-    assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
+    assert_equal expected, SyncWpToStatic.new.send(:render_template, faux_post)
 
     faux_post.tags = %w[foo boo goo]
     faux_post.title.rendered = 'Title of my Cool Post'
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/full_post.md'))
-    assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
+    assert_equal expected, SyncWpToStatic.new.send(:render_template, faux_post)
 
     faux_post.tags = []
     faux_post.content.rendered = '<p>Content with <strong>bold</strong> HTML and 😁 emoji.</p><p>Another line. #foo #boo #goo</p>'
     expected = File.read(File.join(File.dirname(__FILE__), 'fixtures/note_post_hashtags.md'))
-    assert_equal expected, SyncWpToStatic.new.render_template(faux_post)
+    assert_equal expected, SyncWpToStatic.new.send(:render_template, faux_post)
   end
 
   def test_add_files_to_repo
@@ -137,7 +137,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     files = {
       '_posts/2010-01-14-FOOOBAAR.md': 'TVkgU0VDUkVUIEhBUyBCRUVOIFJFVkVBTEVEIPCfmJw='
     }
-    assert res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
+    assert res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
     assert_equal res['object']['sha'], 'abc1234567890xyz'
   end
 
@@ -164,7 +164,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     }
 
     Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
-      res = SyncWpToStatic.new.add_files_to_repo('lildude/lildude.github.io', files)
+      res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
       assert_equal res, 'Would add _posts/2010-01-14-FOOOBAAR.md to lildude/lildude.github.io'.yellow
     end
   end
@@ -172,14 +172,14 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   def test_delete_wp_posts
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
-    assert SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
+    assert SyncWpToStatic.new.send(:delete_wp_posts, [11, 12, 13, 14])
 
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 404, body: JSON.generate(
         code: 'rest_post_invalid_id', message: 'Invalid post ID.', data: { status: 404 }
       ))
       .to_raise(HTTParty::ResponseError.new(''))
-    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.delete_wp_posts([11]) }
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:delete_wp_posts, [11]) }
     expected_message = <<~MSG.chomp
       Problem deleting post: Invalid post ID.
     MSG
@@ -191,7 +191,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
 
     Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
-      assert output = SyncWpToStatic.new.delete_wp_posts([11, 12, 13, 14])
+      assert output = SyncWpToStatic.new.send(:delete_wp_posts, [11, 12, 13, 14])
       assert_equal output, 'Would delete Wordpress posts 11, 12, 13, 14'.yellow
     end
   end

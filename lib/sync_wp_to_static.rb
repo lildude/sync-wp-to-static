@@ -10,6 +10,41 @@ require 'reverse_markdown'
 
 # Class that syncs Wordpress posts to a static site's GitHub repo
 class SyncWpToStatic
+  def run
+    # Check we have tokens
+    configured?
+    # Check we can find the template file
+    template_found?
+    # Get all Wordpress posts - assumes there aren't many so we don't bother with paging
+    return 'Nothing new'.blue if wp_posts.empty?
+
+    markdown_files = {}
+    wp_pids = []
+    github_repo = ENV['GITHUB_REPOSITORY']
+    wp_posts.each do |post|
+      next unless include_post?(post)
+
+      post_filename = filename(post)
+      # Next if we have a post in GitHub repo already
+      next if repo_has_post?(github_repo, post_filename)
+
+      markdown_files[post_filename] = Base64.encode64(render_template(post))
+      wp_pids << post.id
+    end
+
+    return 'Nothing to post'.blue if markdown_files.empty?
+
+    # Add posts to repo in one commit
+    out = [] << add_files_to_repo(github_repo, markdown_files).to_s
+    # Remove Wordpress posts
+    out << delete_wp_posts(wp_pids).to_s
+
+    out << "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
+    out.reject(&:empty?).join("\n")
+  end
+
+  private
+
   def client
     @client ||= Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
   end
@@ -132,38 +167,5 @@ class SyncWpToStatic
     end
 
     ok
-  end
-
-  def run
-    # Check we have tokens
-    configured?
-    # Check we can find the template file
-    template_found?
-    # Get all Wordpress posts - assumes there aren't many so we don't bother with paging
-    return 'Nothing new'.blue if wp_posts.empty?
-
-    markdown_files = {}
-    wp_pids = []
-    github_repo = ENV['GITHUB_REPOSITORY']
-    wp_posts.each do |post|
-      next unless include_post?(post)
-
-      post_filename = filename(post)
-      # Next if we have a post in GitHub repo already
-      next if repo_has_post?(github_repo, post_filename)
-
-      markdown_files[post_filename] = Base64.encode64(render_template(post))
-      wp_pids << post.id
-    end
-
-    return 'Nothing to post'.blue if markdown_files.empty?
-
-    # Add posts to repo in one commit
-    out = [] << add_files_to_repo(github_repo, markdown_files).to_s
-    # Remove Wordpress posts
-    out << delete_wp_posts(wp_pids).to_s
-
-    out << "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
-    out.reject(&:empty?).join("\n")
   end
 end
