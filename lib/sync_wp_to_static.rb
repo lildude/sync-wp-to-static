@@ -30,6 +30,10 @@ class SyncWpToStatic
     true
   end
 
+  def template_found?
+    raise "Whoops! #{ENV['POST_TEMPLATE']} not found." unless File.exist?(ENV['POST_TEMPLATE'])
+  end
+
   def wp_posts
     @wp_posts ||=
       begin
@@ -125,6 +129,8 @@ class SyncWpToStatic
   def run
     # Check we have tokens
     configured?
+    # Check we can find the template file
+    template_found?
     # Get all Wordpress posts - assumes there aren't many so we don't bother with paging
     return 'Nothing new'.blue if wp_posts.empty?
 
