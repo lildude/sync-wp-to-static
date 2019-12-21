@@ -31,7 +31,8 @@ class SyncWpToStatic
   end
 
   def template_found?
-    raise "Whoops! #{ENV['POST_TEMPLATE']} not found." unless File.exist?(ENV['POST_TEMPLATE'])
+    template = ENV['POST_TEMPLATE']
+    raise "Whoops! #{template} not found." unless File.exist?(template)
   end
 
   def wp_posts
@@ -53,11 +54,12 @@ class SyncWpToStatic
   # Use a slugified title or a number based on the date if no title
   def filename(post)
     date = DateTime.parse(post.date)
+    rendered_title = post.title.rendered
     fn =
-      if post.title.rendered.empty?
+      if rendered_title.empty?
         date.strftime('%s').to_i % (24 * 60 * 60)
       else
-        slug = post.title.rendered.downcase.gsub('/[\s.\/_]/', ' ').gsub(/[^\w\s-]/, '').squeeze(' ').tr(' ', '-').chomp('-')
+        slug = rendered_title.downcase.gsub('/[\s.\/_]/', ' ').gsub(/[^\w\s-]/, '').squeeze(' ').tr(' ', '-').chomp('-')
         "#{date.strftime('%F')}-#{slug}"
       end
 
@@ -73,8 +75,9 @@ class SyncWpToStatic
 
   def render_template(post)
     render_binding = binding
-    post.tags = parse_hashtags(post.content.rendered) if post.tags.empty?
-    content = ReverseMarkdown.convert(post.content.rendered.gsub(/#\w+/, '')) # rubocop:disable Lint/UselessAssignment
+    content = post.content.rendered
+    post.tags = parse_hashtags(content) if post.tags.empty?
+    content = ReverseMarkdown.convert(content.gsub(/#\w+/, '')) # rubocop:disable Lint/UselessAssignment
     template = File.read(ENV['POST_TEMPLATE'])
 
     ERB.new(template, trim_mode: '-').result(render_binding)
@@ -116,13 +119,18 @@ class SyncWpToStatic
   def include_post?(post)
     ok = true
     tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
-    if ENV['EXCLUDE_TAGGED']
-      ok = false if tags.any? { |t| ENV['EXCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
+    excluded_tags = ENV['EXCLUDE_TAGGED']
+    included_tags = ENV['INCLUDE_TAGGED']
+
+    tags.any? do |tag|
+      if excluded_tags
+        ok = false if excluded_tags.split(/,\s?/).any? { |excluded| tag == excluded }
+      end
+      if included_tags
+        ok = false unless included_tags.split(/,\s?/).any? { |included| tag == included }
+      end
     end
 
-    if ENV['INCLUDE_TAGGED']
-      ok = false unless tags.any? { |t| ENV['INCLUDE_TAGGED'].split(/,\s?/).any? { |x| t == x } }
-    end
     ok
   end
 

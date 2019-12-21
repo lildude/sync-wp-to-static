@@ -19,6 +19,7 @@ require './lib/sync_wp_to_static'
 
 ENV['RACK_ENV'] ||= 'test'
 
+# Test all the methods individually.
 class SyncWpToStaticMethodsTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'
@@ -201,6 +202,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   end
 end
 
+# Test the run() method as a whole
 class SyncWpToStaticRunTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'

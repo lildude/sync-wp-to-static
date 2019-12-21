@@ -12,3 +12,5 @@ rescue RuntimeError => e
   warn "Error: #{e}".red
   exit 1
 end
+
+# vi: filetype=ruby
