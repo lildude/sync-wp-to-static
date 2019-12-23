@@ -21,7 +21,8 @@ jobs:
     - name: Install Dependencies
       run: |
         gem install bundler --no-document
-        bundle install --jobs 4 --local --deployment
+        bundle config set deployment 'true'
+        bundle install --jobs 4 --local
     - name: Run tests
       run: bundle exec rake test
     - name: Rubocop
