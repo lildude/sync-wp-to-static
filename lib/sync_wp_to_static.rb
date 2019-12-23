@@ -51,7 +51,7 @@ class SyncWpToStatic
 
   def configured?
     missing_tokens = []
-    %w[WORDPRESS_TOKEN WORDPRESS_ENDPOINT GITHUB_TOKEN POST_TEMPLATE].each do |env_var|
+    %w[WORDPRESS_TOKEN WORDPRESS_ENDPOINT GITHUB_TOKEN POST_TEMPLATE POSTS_PATH].each do |env_var|
       missing_tokens << env_var unless ENV[env_var]
     end
 
@@ -102,7 +102,7 @@ class SyncWpToStatic
   end
 
   def repo_has_post?(repo, filename)
-    res = client.search_code("filename:#{filename} repo:#{repo} path:_posts")
+    res = client.search_code("filename:#{filename} repo:#{repo} path:#{ENV['POSTS_PATH']}")
     return false if res.total_count.zero?
 
     true
@@ -126,7 +126,7 @@ class SyncWpToStatic
 
     new_tree = files.map do |path, content|
       Hash(
-        path: path,
+        path: "#{ENV['POSTS_PATH']}/#{path}",
         mode: '100644',
         type: 'blob',
         sha: client.create_blob(repo, content, 'base64')
