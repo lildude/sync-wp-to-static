@@ -138,8 +138,8 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     files = {
       '_posts/2010-01-14-FOOOBAAR.md': 'TVkgU0VDUkVUIEhBUyBCRUVOIFJFVkVBTEVEIPCfmJw='
     }
-    assert res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
-    assert_equal res['object']['sha'], 'abc1234567890xyz'
+    res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
+    assert_equal res, 'Commit SHA: abc1234567890xyz'.yellow
   end
 
   def test_add_files_to_repo_dry_run
@@ -173,7 +173,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   def test_delete_wp_posts
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
-    assert SyncWpToStatic.new.send(:delete_wp_posts, [11, 12, 13, 14])
+    assert_equal 'Wordpress posts deleted'.yellow, SyncWpToStatic.new.send(:delete_wp_posts, [11, 12, 13, 14])
 
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 404, body: JSON.generate(

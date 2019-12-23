@@ -135,7 +135,8 @@ class SyncWpToStatic
 
     new_tree_sha = client.create_tree(repo, new_tree, base_tree: base_tree_sha).sha
     new_commit_sha = client.create_commit(repo, 'New WP sync\'d post', new_tree_sha, latest_commit_sha).sha
-    client.update_ref(repo, 'heads/master', new_commit_sha)
+    res = client.update_ref(repo, 'heads/master', new_commit_sha)
+    "Commit SHA: #{res['object']['sha']}".yellow
   end
 
   def delete_wp_posts(post_ids)
@@ -147,6 +148,7 @@ class SyncWpToStatic
       uri = "#{ENV['WORDPRESS_ENDPOINT']}/posts/#{pid}"
       HTTParty.delete(uri, headers: headers, raise_on: [403, 404, 500])
     end
+    'Wordpress posts deleted'.yellow
   rescue HTTParty::ResponseError => e
     body = JSON.parse(e.response.body, object_class: OpenStruct)
     raise "Problem deleting post: #{body.message}"
