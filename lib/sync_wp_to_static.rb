@@ -139,6 +139,7 @@ class SyncWpToStatic
   end
 
   def delete_wp_posts(post_ids)
+    return if ENV['DONT_DELETE']
     return "Would delete Wordpress posts #{post_ids.join(', ')}".yellow if ENV['DRY_RUN']
 
     headers = { 'Authorization': "Bearer #{ENV['WORDPRESS_TOKEN']}" }
