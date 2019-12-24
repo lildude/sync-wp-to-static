@@ -24,10 +24,10 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'
     ENV['GITHUB_REPOSITORY'] = 'lildude/lildude.github.io'
-    ENV['POST_TEMPLATE'] = 'test/fixtures/template.erb'
-    ENV['POSTS_PATH'] = '_posts'
-    ENV['WORDPRESS_TOKEN'] = '1234567890'
-    ENV['WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
+    ENV['INPUT_POST_TEMPLATE'] = 'test/fixtures/template.erb'
+    ENV['INPUT_POSTS_PATH'] = '_posts'
+    ENV['INPUT_WORDPRESS_TOKEN'] = '1234567890'
+    ENV['INPUT_WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
   end
 
   def test_client
@@ -38,7 +38,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   def test_configured
     assert SyncWpToStatic.new.send(:configured?)
 
-    ENV['WORDPRESS_TOKEN'] = nil
+    ENV['INPUT_WORDPRESS_TOKEN'] = nil
     ENV['GITHUB_TOKEN'] = nil
 
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:configured?) }
@@ -46,7 +46,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   end
 
   def test_template_found
-    ENV['POST_TEMPLATE'] = 'foobar.erb'
+    ENV['INPUT_POST_TEMPLATE'] = 'foobar.erb'
 
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:template_found?) }
     assert_match 'Whoops! foobar.erb not found.', exception.message
@@ -62,7 +62,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
       .to_raise(HTTParty::ResponseError.new(''))
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:wp_posts) }
     expected_message = <<~MSG.chomp
-      Problem accessing #{ENV['WORDPRESS_ENDPOINT']}/posts: Invalid site specified
+      Problem accessing #{ENV['INPUT_WORDPRESS_ENDPOINT']}/posts: Invalid site specified
     MSG
     assert_equal expected_message, exception.message
   end
@@ -164,7 +164,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
       '_posts/2010-01-14-FOOOBAAR.md': 'TVkgU0VDUkVUIEhBUyBCRUVOIFJFVkVBTEVEIPCfmJw='
     }
 
-    Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_DRY_RUN' => '1')) do
       res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
       assert_equal res, 'Would add _posts/2010-01-14-FOOOBAAR.md to lildude/lildude.github.io'.yellow
     end
@@ -191,7 +191,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     stub_request(:delete, /fundiworks.wordpress.com/)
       .to_return(status: 200, body: JSON.generate(results: []), headers: {})
 
-    Object.stub_const(:ENV, ENV.to_hash.merge('DRY_RUN' => '1')) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_DRY_RUN' => '1')) do
       assert output = SyncWpToStatic.new.send(:delete_wp_posts, [11, 12, 13, 14])
       assert_equal output, 'Would delete Wordpress posts 11, 12, 13, 14'.yellow
     end
@@ -208,14 +208,14 @@ class SyncWpToStaticRunTest < Minitest::Test
   def setup
     ENV['GITHUB_TOKEN'] = '0987654321'
     ENV['GITHUB_REPOSITORY'] = 'lildude/lildude.github.io'
-    ENV['POST_TEMPLATE'] = 'test/fixtures/template.erb'
-    ENV['POSTS_PATH'] = '_posts'
-    ENV['WORDPRESS_TOKEN'] = '1234567890'
-    ENV['WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
+    ENV['INPUT_POST_TEMPLATE'] = 'test/fixtures/template.erb'
+    ENV['INPUT_POSTS_PATH'] = '_posts'
+    ENV['INPUT_WORDPRESS_TOKEN'] = '1234567890'
+    ENV['INPUT_WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
   end
 
   def test_run_runtime_error
-    ENV['GITHUB_TOKEN'] = nil
+    ENV['INPUT_WORDPRESS_TOKEN'] = nil
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.run }
     assert_match 'Whoops! Looks like you\'ve not finished configuring things.', exception.message
   end
@@ -299,7 +299,7 @@ class SyncWpToStaticRunTest < Minitest::Test
         body: JSON.generate(total_count: 0)
       )
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge('INCLUDE_TAGGED' => 'run')) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_INCLUDE_TAGGED' => 'run')) do
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns
@@ -350,7 +350,7 @@ class SyncWpToStaticRunTest < Minitest::Test
         body: JSON.generate(total_count: 0)
       )
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge('EXCLUDE_TAGGED' => 'run, tech')) do
+    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_EXCLUDE_TAGGED' => 'run, tech')) do
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns
