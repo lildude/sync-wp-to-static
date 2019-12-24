@@ -10,8 +10,21 @@ require 'reverse_markdown'
 
 # Class that syncs Wordpress posts to a static site's GitHub repo
 class SyncWpToStatic
+  def initialize
+    @dont_delete = ENV['INPUT_DONT_DELETE']
+    @dry_run = ENV['INPUT_DRY_RUN']
+    @excluded_tags = ENV['INPUT_EXCLUDE_TAGGED']
+    @github_repo = ENV['GITHUB_REPOSITORY']
+    @github_token = ENV['GITHUB_TOKEN']
+    @included_tags = ENV['INPUT_INCLUDE_TAGGED']
+    @post_template = ENV['INPUT_POST_TEMPLATE']
+    @posts_path = ENV['INPUT_POSTS_PATH']
+    @wordpress_endpoint = ENV['INPUT_WORDPRESS_ENDPOINT']
+    @wordpress_token = ENV['INPUT_WORDPRESS_TOKEN']
+  end
+
   def run
-    # Check we have tokens
+    # Check we been configured
     configured?
     # Check we can find the template file
     template_found?
@@ -20,13 +33,12 @@ class SyncWpToStatic
 
     markdown_files = {}
     wp_pids = []
-    github_repo = ENV['GITHUB_REPOSITORY']
     wp_posts.each do |post|
       next unless include_post?(post)
 
       post_filename = filename(post)
       # Next if we have a post in GitHub repo already
-      next if repo_has_post?(github_repo, post_filename)
+      next if repo_has_post?(@github_repo, post_filename)
 
       markdown_files[post_filename] = Base64.encode64(render_template(post))
       wp_pids << post.id
@@ -35,45 +47,43 @@ class SyncWpToStatic
     return 'Nothing to post'.blue if markdown_files.empty?
 
     # Add posts to repo in one commit
-    out = [] << add_files_to_repo(github_repo, markdown_files).to_s
+    out = [] << add_files_to_repo(@github_repo, markdown_files).to_s
     # Remove Wordpress posts
     out << delete_wp_posts(wp_pids).to_s
-
-    out << "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{github_repo}".green
+    out << "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{@github_repo}".green
     out.reject(&:empty?).join("\n")
   end
 
   private
 
   def client
-    @client ||= Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
+    @client ||= Octokit::Client.new(access_token: @github_token)
   end
 
   def configured?
-    missing_tokens = []
+    missing_inputs = []
     %w[WORDPRESS_TOKEN WORDPRESS_ENDPOINT POST_TEMPLATE POSTS_PATH].each do |env_var|
-      missing_tokens << env_var unless ENV["INPUT_#{env_var}"]
+      missing_inputs << env_var unless ENV["INPUT_#{env_var}"]
     end
 
     msg = <<~ERROR_MSG
       Whoops! Looks like you've not finished configuring things.
-      Missing: #{missing_tokens.join(', ')} inputs."
+      Missing: #{missing_inputs.join(', ').downcase} inputs."
     ERROR_MSG
 
-    raise msg unless missing_tokens.empty?
+    raise msg unless missing_inputs.empty?
 
     true
   end
 
   def template_found?
-    template = ENV['INPUT_POST_TEMPLATE']
-    raise "Whoops! #{template} not found." unless File.exist?(template)
+    raise "Whoops! #{@post_template} not found." unless File.exist?(@post_template)
   end
 
   def wp_posts
     @wp_posts ||=
       begin
-        uri = "#{ENV['INPUT_WORDPRESS_ENDPOINT']}/posts"
+        uri = "#{@wordpress_endpoint}/posts"
         response = HTTParty.get(uri, format: :plain, raise_on: [400, 403, 404, 500])
         JSON.parse(response, object_class: OpenStruct)
       rescue HTTParty::ResponseError => e
@@ -102,7 +112,7 @@ class SyncWpToStatic
   end
 
   def repo_has_post?(repo, filename)
-    res = client.search_code("filename:#{filename} repo:#{repo} path:#{ENV['INPUT_POSTS_PATH']}")
+    res = client.search_code("filename:#{filename} repo:#{repo} path:#{@posts_path}")
     return false if res.total_count.zero?
 
     true
@@ -113,20 +123,20 @@ class SyncWpToStatic
     content = post.content.rendered
     post.tags = parse_hashtags(content) if post.tags.empty?
     content = ReverseMarkdown.convert(content.gsub(/#\w+/, '')) # rubocop:disable Lint/UselessAssignment
-    template = File.read(ENV['INPUT_POST_TEMPLATE'])
+    template = File.read(@post_template)
 
     ERB.new(template, trim_mode: '-').result(render_binding)
   end
 
   def add_files_to_repo(repo, files = {})
-    return "Would add #{files.keys.join(', ')} to #{repo}".yellow if ENV['INPUT_DRY_RUN']
+    return "Would add #{files.keys.join(', ')} to #{repo}".yellow if @dry_run
 
     latest_commit_sha = client.ref(repo, 'heads/master').object.sha
     base_tree_sha = client.commit(repo, latest_commit_sha).commit.tree.sha
 
     new_tree = files.map do |path, content|
       Hash(
-        path: "#{ENV['INPUT_POSTS_PATH']}/#{path}",
+        path: "#{@posts_path}/#{path}",
         mode: '100644',
         type: 'blob',
         sha: client.create_blob(repo, content, 'base64')
@@ -140,12 +150,12 @@ class SyncWpToStatic
   end
 
   def delete_wp_posts(post_ids)
-    return if ENV['INPUT_DONT_DELETE']
-    return "Would delete Wordpress posts #{post_ids.join(', ')}".yellow if ENV['INPUT_DRY_RUN']
+    return if @dont_delete
+    return "Would delete Wordpress posts #{post_ids.join(', ')}".yellow if @dry_run
 
-    headers = { 'Authorization': "Bearer #{ENV['INPUT_WORDPRESS_TOKEN']}" }
+    headers = { 'Authorization': "Bearer #{@wordpress_token}" }
     post_ids.each do |pid|
-      uri = "#{ENV['INPUT_WORDPRESS_ENDPOINT']}/posts/#{pid}"
+      uri = "#{@wordpress_endpoint}/posts/#{pid}"
       HTTParty.delete(uri, headers: headers, raise_on: [403, 404, 500])
     end
     'Wordpress posts deleted'.yellow
@@ -157,15 +167,13 @@ class SyncWpToStatic
   def include_post?(post)
     ok = true
     tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
-    excluded_tags = ENV['INPUT_EXCLUDE_TAGGED']
-    included_tags = ENV['INPUT_INCLUDE_TAGGED']
 
     tags.any? do |tag|
-      if excluded_tags
-        ok = false if excluded_tags.split(/,\s?/).any? { |excluded| tag == excluded }
+      if @excluded_tags
+        ok = false if @excluded_tags.split(/,\s?/).any? { |excluded| tag == excluded }
       end
-      if included_tags
-        ok = false unless included_tags.split(/,\s?/).any? { |included| tag == included }
+      if @included_tags
+        ok = false unless @included_tags.split(/,\s?/).any? { |included| tag == included }
       end
     end
 
