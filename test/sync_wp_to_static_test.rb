@@ -22,8 +22,8 @@ ENV['RACK_ENV'] ||= 'test'
 # Test all the methods individually.
 class SyncWpToStaticMethodsTest < Minitest::Test
   def setup
-    ENV['GITHUB_TOKEN'] = '0987654321'
     ENV['GITHUB_REPOSITORY'] = 'lildude/lildude.github.io'
+    ENV['INPUT_GITHUB_TOKEN'] = '0987654321'
     ENV['INPUT_POST_TEMPLATE'] = 'test/fixtures/template.erb'
     ENV['INPUT_POSTS_PATH'] = '_posts'
     ENV['INPUT_WORDPRESS_TOKEN'] = '1234567890'
@@ -39,7 +39,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert SyncWpToStatic.new.send(:configured?)
 
     ENV['INPUT_WORDPRESS_TOKEN'] = nil
-    ENV['GITHUB_TOKEN'] = nil
+    ENV['INPUT_GITHUB_TOKEN'] = nil
 
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:configured?) }
     assert_match "Whoops! Looks like you've not finished configuring things", exception.message
@@ -206,8 +206,8 @@ end
 # Test the run() method as a whole
 class SyncWpToStaticRunTest < Minitest::Test
   def setup
-    ENV['GITHUB_TOKEN'] = '0987654321'
     ENV['GITHUB_REPOSITORY'] = 'lildude/lildude.github.io'
+    ENV['INPUT_GITHUB_TOKEN'] = '0987654321'
     ENV['INPUT_POST_TEMPLATE'] = 'test/fixtures/template.erb'
     ENV['INPUT_POSTS_PATH'] = '_posts'
     ENV['INPUT_WORDPRESS_TOKEN'] = '1234567890'

@@ -15,7 +15,7 @@ class SyncWpToStatic
     @dry_run = ENV['INPUT_DRY_RUN']
     @excluded_tags = ENV['INPUT_EXCLUDE_TAGGED']
     @github_repo = ENV['GITHUB_REPOSITORY']
-    @github_token = ENV['GITHUB_TOKEN']
+    @github_token = ENV['INPUT_GITHUB_TOKEN']
     @included_tags = ENV['INPUT_INCLUDE_TAGGED']
     @post_template = ENV['INPUT_POST_TEMPLATE']
     @posts_path = ENV['INPUT_POSTS_PATH']
@@ -62,7 +62,7 @@ class SyncWpToStatic
 
   def configured?
     missing_inputs = []
-    %w[WORDPRESS_TOKEN WORDPRESS_ENDPOINT POST_TEMPLATE POSTS_PATH].each do |env_var|
+    %w[GITHUB_TOKEN POSTS_PATH POST_TEMPLATE WORDPRESS_ENDPOINT WORDPRESS_TOKEN].each do |env_var|
       missing_inputs << env_var unless ENV["INPUT_#{env_var}"]
     end
 
