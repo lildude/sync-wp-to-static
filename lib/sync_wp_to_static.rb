@@ -38,7 +38,7 @@ class SyncWpToStatic
 
       post_filename = filename(post)
       # Next if we have a post in GitHub repo already
-      next if repo_has_post?(@github_repo, post_filename)
+      next if repo_has_post?(post_filename)
 
       markdown_files[post_filename] = Base64.encode64(render_template(post))
       wp_pids << post.id
@@ -47,7 +47,7 @@ class SyncWpToStatic
     return 'Nothing to post'.blue if markdown_files.empty?
 
     # Add posts to repo in one commit
-    out = [] << add_files_to_repo(@github_repo, markdown_files).to_s
+    out = [] << add_files_to_repo(markdown_files).to_s
     # Remove Wordpress posts
     out << delete_wp_posts(wp_pids).to_s
     out << "Sync'd Wordpress posts #{wp_pids.join(', ')} to GitHub #{@github_repo}".green
@@ -111,8 +111,8 @@ class SyncWpToStatic
     "#{fn}.md"
   end
 
-  def repo_has_post?(repo, filename)
-    res = client.search_code("filename:#{filename} repo:#{repo} path:#{@posts_path}")
+  def repo_has_post?(filename)
+    res = client.search_code("filename:#{filename} repo:#{@github_repo} path:#{@posts_path}")
     return false if res.total_count.zero?
 
     true
@@ -128,24 +128,24 @@ class SyncWpToStatic
     ERB.new(template, trim_mode: '-').result(render_binding)
   end
 
-  def add_files_to_repo(repo, files = {})
-    return "Would add #{files.keys.join(', ')} to #{repo}".yellow if @dry_run
+  def add_files_to_repo(files = {})
+    return "Would add #{files.keys.join(', ')} to #{@github_repo}".yellow if @dry_run
 
-    latest_commit_sha = client.ref(repo, 'heads/master').object.sha
-    base_tree_sha = client.commit(repo, latest_commit_sha).commit.tree.sha
+    latest_commit_sha = client.ref(@github_repo, 'heads/master').object.sha
+    base_tree_sha = client.commit(@github_repo, latest_commit_sha).commit.tree.sha
 
     new_tree = files.map do |path, content|
       Hash(
         path: "#{@posts_path}/#{path}",
         mode: '100644',
         type: 'blob',
-        sha: client.create_blob(repo, content, 'base64')
+        sha: client.create_blob(@github_repo, content, 'base64')
       )
     end
 
-    new_tree_sha = client.create_tree(repo, new_tree, base_tree: base_tree_sha).sha
-    new_commit_sha = client.create_commit(repo, 'New WP sync\'d post', new_tree_sha, latest_commit_sha).sha
-    res = client.update_ref(repo, 'heads/master', new_commit_sha)
+    new_tree_sha = client.create_tree(@github_repo, new_tree, base_tree: base_tree_sha).sha
+    new_commit_sha = client.create_commit(@github_repo, 'New WP sync\'d post', new_tree_sha, latest_commit_sha).sha
+    res = client.update_ref(@github_repo, 'heads/master', new_commit_sha)
     "Commit SHA: #{res['object']['sha']}".yellow
   end
 

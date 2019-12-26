@@ -87,8 +87,8 @@ class SyncWpToStaticMethodsTest < Minitest::Test
         status: 200, headers: { 'Content-Type' => 'application/json' },
         body: JSON.generate(total_count: 0)
       )
-    assert SyncWpToStatic.new.send(:repo_has_post?, 'lildude/lildude.github.io', 'BAARFOOO')
-    refute SyncWpToStatic.new.send(:repo_has_post?, 'lildude/lildude.github.io', 'FOOOBAAR')
+    assert SyncWpToStatic.new.send(:repo_has_post?, 'BAARFOOO')
+    refute SyncWpToStatic.new.send(:repo_has_post?, 'FOOOBAAR')
   end
 
   def test_render_template
@@ -138,7 +138,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     files = {
       '_posts/2010-01-14-FOOOBAAR.md': 'TVkgU0VDUkVUIEhBUyBCRUVOIFJFVkVBTEVEIPCfmJw='
     }
-    res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
+    res = SyncWpToStatic.new.send(:add_files_to_repo, files)
     assert_equal res, 'Commit SHA: abc1234567890xyz'.yellow
   end
 
@@ -165,7 +165,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     }
 
     Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_DRY_RUN' => '1')) do
-      res = SyncWpToStatic.new.send(:add_files_to_repo, 'lildude/lildude.github.io', files)
+      res = SyncWpToStatic.new.send(:add_files_to_repo, files)
       assert_equal res, 'Would add _posts/2010-01-14-FOOOBAAR.md to lildude/lildude.github.io'.yellow
     end
   end
