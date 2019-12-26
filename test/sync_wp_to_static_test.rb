@@ -38,11 +38,13 @@ class SyncWpToStaticMethodsTest < Minitest::Test
   def test_configured
     assert SyncWpToStatic.new.send(:configured?)
 
-    ENV['INPUT_WORDPRESS_TOKEN'] = nil
+    ENV['INPUT_WORDPRESS_TOKEN'] = ''
     ENV['INPUT_GITHUB_TOKEN'] = nil
 
     exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:configured?) }
     assert_match "Whoops! Looks like you've not finished configuring things", exception.message
+    assert_match 'wordpress_token', exception.message
+    assert_match 'github_token', exception.message
   end
 
   def test_template_found

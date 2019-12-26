@@ -63,12 +63,12 @@ class SyncWpToStatic
   def configured?
     missing_inputs = []
     %w[GITHUB_TOKEN POSTS_PATH POST_TEMPLATE WORDPRESS_ENDPOINT WORDPRESS_TOKEN].each do |env_var|
-      missing_inputs << env_var unless ENV["INPUT_#{env_var}"]
+      missing_inputs << env_var unless ENV["INPUT_#{env_var}"] && !ENV["INPUT_#{env_var}"].empty?
     end
 
     msg = <<~ERROR_MSG
       Whoops! Looks like you've not finished configuring things.
-      Missing: #{missing_inputs.join(', ').downcase} inputs."
+      Missing or empty inputs: #{missing_inputs.join(', ').downcase}."
     ERROR_MSG
 
     raise msg unless missing_inputs.empty?
