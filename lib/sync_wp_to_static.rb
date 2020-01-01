@@ -165,9 +165,10 @@ class SyncWpToStatic
   end
 
   def include_post?(post)
-    ok = true
     tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
+    return true if tags.empty?
 
+    ok = true
     tags.any? do |tag|
       if @excluded_tags
         ok = false if @excluded_tags.split(/,\s?/).any? { |excluded| tag == excluded }
