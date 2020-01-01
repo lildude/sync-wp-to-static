@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Hide Octokit warning
 $VERBOSE = nil
 require 'rubygems'
 require 'bundler/setup'
