@@ -15,7 +15,7 @@ GEM
     crack (0.4.3)
       safe_yaml (~> 1.0.0)
     docile (1.3.2)
-    faraday (0.17.1)
+    faraday (0.17.0)
       multipart-post (>= 1.2, < 3)
     hashdiff (1.0.0)
     httparty (0.17.3)
@@ -81,6 +81,7 @@ PLATFORMS
 DEPENDENCIES
   colorize
   coveralls (~> 0.8.0)
+  faraday (= 0.17.0)
   httparty
   minitest
   minitest-stub-const
