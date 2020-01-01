@@ -169,7 +169,7 @@ class SyncWpToStatic
 
   def include_post?(post)
     tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
-    return true if tags.empty?
+    return false if tags.empty? && @included_tags
 
     ok = true
     tags.any? do |tag|

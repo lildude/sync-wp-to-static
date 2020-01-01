@@ -23,3 +23,9 @@ Metrics/ClassLength:
   Max: 150
   Exclude:
     - 'test/**/*'
+
+Metrics/PerceivedComplexity:
+  Max: 8
+
+Metrics/CyclomaticComplexity:
+  Max: 8

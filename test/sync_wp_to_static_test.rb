@@ -295,6 +295,15 @@ class SyncWpToStaticRunTest < Minitest::Test
         type: 'post',
         date: '2019-11-09T15:31:19',
         content: { rendered: 'Post content with tags and title.' }
+      },
+      {
+        id: 103,
+        title: { rendered: 'This is a fantastic title too' },
+        tags: %w[],
+        format: 'post',
+        type: 'post',
+        date: '2019-11-09T15:31:19',
+        content: { rendered: 'Post content without tags and with title.' }
       }
     ]
     # Stub getting WP posts
@@ -345,6 +354,15 @@ class SyncWpToStaticRunTest < Minitest::Test
         type: 'post',
         date: '2019-11-09T15:31:19',
         content: { rendered: 'Post content with tags and title.' }
+      },
+      {
+        id: 104,
+        title: { rendered: 'This is a fantastic title too' },
+        tags: %w[],
+        format: 'post',
+        type: 'post',
+        date: '2019-11-09T15:31:19',
+        content: { rendered: 'Post content without tags and with title.' }
       }
     ]
 
@@ -363,7 +381,7 @@ class SyncWpToStaticRunTest < Minitest::Test
       runit = SyncWpToStatic.new
       runit.expects(:add_files_to_repo).returns
       runit.expects(:delete_wp_posts).returns
-      expected = "Sync'd Wordpress posts 102 to GitHub lildude/lildude.github.io".green
+      expected = "Sync'd Wordpress posts 102, 104 to GitHub lildude/lildude.github.io".green
       assert_equal expected, runit.run
     end
   end
