@@ -221,113 +221,8 @@ class SyncWpToStaticRunTest < Minitest::Test
     ENV['INPUT_POSTS_PATH'] = '_posts'
     ENV['INPUT_WORDPRESS_TOKEN'] = '1234567890'
     ENV['INPUT_WORDPRESS_ENDPOINT'] = 'https://public-api.wordpress.com/wp/v2/sites/fundiworks.wordpress.com'
-  end
 
-  def test_run_runtime_error
-    ENV['INPUT_WORDPRESS_TOKEN'] = nil
-    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.run }
-    assert_match 'Whoops! Looks like you\'ve not finished configuring things.', exception.message
-  end
-
-  def test_run_no_posts
-    stub_request(:get, /fundiworks.wordpress.com/)
-      .to_return(status: 200, body: JSON.generate([]), headers: {})
-
-    assert_equal 'Nothing new'.blue, SyncWpToStatic.new.run
-  end
-
-  def test_run_all_the_types_of_posts
-    faux_posts = [
-      {
-        id: 101,
-        title: { rendered: '' },
-        tags: [],
-        format: 'aside',
-        type: 'post',
-        date: '2019-11-08T16:33:20',
-        content: { rendered: 'Post content #run' }
-      },
-      {
-        id: 102,
-        title: { rendered: 'This is a fantastic title' },
-        tags: %w[tag1 tag2],
-        format: 'post',
-        type: 'post',
-        date: '2019-11-09T15:31:19',
-        content: { rendered: 'Post content with tags and title.' }
-      }
-    ]
-    # Stub getting WP posts
-    stub_request(:get, /fundiworks.wordpress.com/)
-      .to_return(status: 200, body: JSON.generate(faux_posts), headers: {})
-    # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
-    stub_request(:get, /api.github.com/)
-      .to_return(
-        { status: 200, headers: { 'Content-Type' => 'application/json' },
-          body: JSON.generate(total_count: 1) },
-        status: 200, headers: { 'Content-Type' => 'application/json' },
-        body: JSON.generate(total_count: 0)
-      )
-    # Stub add_files_to_repo and delete_wp_posts - we test these above so don't care about their behaviour right now
-    runit = SyncWpToStatic.new
-    runit.expects(:add_files_to_repo).returns
-    runit.expects(:delete_wp_posts).returns
-    expected = "Sync'd Wordpress posts 102 to GitHub lildude/lildude.github.io".green
-    assert_equal expected, runit.run
-  end
-
-  def test_sync_only_included
-    faux_posts = [
-      {
-        id: 101,
-        title: { rendered: '' },
-        tags: [],
-        format: 'aside',
-        type: 'post',
-        date: '2019-11-08T16:33:20',
-        content: { rendered: 'Post content #run' }
-      },
-      {
-        id: 102,
-        title: { rendered: 'This is a fantastic title' },
-        tags: %w[tag1 tag2],
-        format: 'post',
-        type: 'post',
-        date: '2019-11-09T15:31:19',
-        content: { rendered: 'Post content with tags and title.' }
-      },
-      {
-        id: 103,
-        title: { rendered: 'This is a fantastic title too' },
-        tags: %w[],
-        format: 'post',
-        type: 'post',
-        date: '2019-11-09T15:31:19',
-        content: { rendered: 'Post content without tags and with title.' }
-      }
-    ]
-    # Stub getting WP posts
-    stub_request(:get, /fundiworks.wordpress.com/)
-      .to_return(status: 200, body: JSON.generate(faux_posts), headers: {})
-    # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
-    stub_request(:get, /api.github.com/)
-      .to_return(
-        status: 200,
-        headers: { 'Content-Type' => 'application/json' },
-        body: JSON.generate(total_count: 0)
-      )
-    # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
-    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_INCLUDE_TAGGED' => 'run')) do
-      runit = SyncWpToStatic.new
-      runit.expects(:add_files_to_repo).returns
-      runit.expects(:delete_wp_posts).returns
-      expected = "Sync'd Wordpress posts 101 to GitHub lildude/lildude.github.io".green
-      assert_equal expected, runit.run
-    end
-  end
-
-  def test_dont_sync_excluded
-    faux_posts = [
+    @faux_posts = [
       {
         id: 101,
         title: { rendered: '' },
@@ -365,10 +260,66 @@ class SyncWpToStaticRunTest < Minitest::Test
         content: { rendered: 'Post content without tags and with title.' }
       }
     ]
+  end
 
+  def test_run_runtime_error
+    ENV['INPUT_WORDPRESS_TOKEN'] = nil
+    exception = assert_raises(RuntimeError) { SyncWpToStatic.new.run }
+    assert_match 'Whoops! Looks like you\'ve not finished configuring things.', exception.message
+  end
+
+  def test_run_no_posts
+    stub_request(:get, /fundiworks.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate([]), headers: {})
+
+    assert_equal 'Nothing new'.blue, SyncWpToStatic.new.run
+  end
+
+  def test_run_all_the_types_of_posts
     # Stub getting WP posts
     stub_request(:get, /fundiworks.wordpress.com/)
-      .to_return(status: 200, body: JSON.generate(faux_posts), headers: {})
+      .to_return(status: 200, body: JSON.generate(@faux_posts), headers: {})
+    # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
+    stub_request(:get, /api.github.com/)
+      .to_return(
+        { status: 200, headers: { 'Content-Type' => 'application/json' },
+          body: JSON.generate(total_count: 1) },
+        status: 200, headers: { 'Content-Type' => 'application/json' },
+        body: JSON.generate(total_count: 0)
+      )
+    # Stub add_files_to_repo and delete_wp_posts - we test these above so don't care about their behaviour right now
+    runit = SyncWpToStatic.new
+    runit.expects(:add_files_to_repo).returns
+    runit.expects(:delete_wp_posts).returns
+    expected = "Sync'd Wordpress posts 102, 103, 104 to GitHub lildude/lildude.github.io".green
+    assert_equal expected, runit.run
+  end
+
+  def test_sync_only_included
+    # Stub getting WP posts
+    stub_request(:get, /fundiworks.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate(@faux_posts), headers: {})
+    # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
+    stub_request(:get, /api.github.com/)
+      .to_return(
+        status: 200,
+        headers: { 'Content-Type' => 'application/json' },
+        body: JSON.generate(total_count: 0)
+      )
+    # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
+    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_INCLUDE_TAGGED' => 'run')) do
+      runit = SyncWpToStatic.new
+      runit.expects(:add_files_to_repo).returns
+      runit.expects(:delete_wp_posts).returns
+      expected = "Sync'd Wordpress posts 101 to GitHub lildude/lildude.github.io".green
+      assert_equal expected, runit.run
+    end
+  end
+
+  def test_dont_sync_excluded
+    # Stub getting WP posts
+    stub_request(:get, /fundiworks.wordpress.com/)
+      .to_return(status: 200, body: JSON.generate(@faux_posts), headers: {})
     # Stub checking for posts in repo - the repo has the first post, but not the subsequent.
     stub_request(:get, /api.github.com/)
       .to_return(
