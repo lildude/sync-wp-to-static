@@ -47,6 +47,13 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     assert_match 'github_token', exception.message
   end
 
+  def test_configured_include_and_exclude
+    Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_EXCLUDE_TAGGED' => 'foo', 'INPUT_INCLUDE_TAGGED' => 'bar')) do
+      exception = assert_raises(RuntimeError) { SyncWpToStatic.new.send(:configured?) }
+      assert_match "`exclude_tagged` and `include_tagged` can't both be set.", exception.message
+    end
+  end
+
   def test_template_found
     ENV['INPUT_POST_TEMPLATE'] = 'foobar.erb'
 

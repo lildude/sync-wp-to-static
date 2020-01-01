@@ -73,6 +73,9 @@ class SyncWpToStatic
 
     raise msg unless missing_inputs.empty?
 
+    # Include and exclude both can't be set at the same time
+    raise "`exclude_tagged` and `include_tagged` can't both be set." if ENV['INPUT_EXCLUDE_TAGGED'] && ENV['INPUT_INCLUDE_TAGGED']
+
     true
   end
 

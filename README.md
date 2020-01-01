@@ -34,11 +34,11 @@ Boolean. Perform the action but do not make any changes. This will show messages
 
 ### `exclude_tagged`
 
-Comma-separated list of tags that should not be synchronised.
+Comma-separated list of tags that should not be synchronised. Do not set if setting `include_tagged`.
 
 ### `include_tagged`
 
-Comma-separated list of tags that should be synchronised. Only posts with these tags will be synchronised.
+Comma-separated list of tags that should be synchronised. Only posts with these tags will be synchronised. Do not set if setting `exclude_tagged`.
 
 
 ## Example Usage
