@@ -83,7 +83,7 @@ class SyncWpToStaticMethodsTest < Minitest::Test
 
   def test_filename
     faux_post = JSON.parse({ 'title' => { 'rendered' => '' }, 'date' => '2019-11-08T16:33:20' }.to_json, object_class: OpenStruct)
-    assert_equal '59600.md', SyncWpToStatic.new.send(:filename, faux_post)
+    assert_equal '2019-11-08-59600.md', SyncWpToStatic.new.send(:filename, faux_post)
     faux_post.title.rendered = 'Foo Bar gOO DaR'
     assert_equal '2019-11-08-foo-bar-goo-dar.md', SyncWpToStatic.new.send(:filename, faux_post)
   end

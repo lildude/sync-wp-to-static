@@ -103,15 +103,14 @@ class SyncWpToStatic
   def filename(post)
     date = DateTime.parse(post.date)
     rendered_title = post.title.rendered
-    fn =
+    slug =
       if rendered_title.empty?
         date.strftime('%s').to_i % (24 * 60 * 60)
       else
-        slug = rendered_title.downcase.gsub('/[\s.\/_]/', ' ').gsub(/[^\w\s-]/, '').squeeze(' ').tr(' ', '-').chomp('-')
-        "#{date.strftime('%F')}-#{slug}"
+        rendered_title.downcase.gsub('/[\s.\/_]/', ' ').gsub(/[^\w\s-]/, '').squeeze(' ').tr(' ', '-').chomp('-')
       end
 
-    "#{fn}.md"
+    "#{date.strftime('%F')}-#{slug}.md"
   end
 
   def repo_has_post?(filename)
