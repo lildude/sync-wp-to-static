@@ -37,6 +37,7 @@ class SyncWpToStatic
       next unless include_post?(post)
 
       post_filename = filename(post)
+
       # Next if we have a post in GitHub repo already
       next if repo_has_post?(post_filename)
 
@@ -170,16 +171,14 @@ class SyncWpToStatic
     tags = Set.new(post.tags) + parse_hashtags(post.content.rendered)
     return false if tags.empty? && @included_tags
 
-    ok = true
-    tags.any? do |tag|
-      if @excluded_tags
-        ok = false if @excluded_tags.split(/,\s?/).any? { |excluded| tag == excluded }
-      end
-      if @included_tags
-        ok = false unless @included_tags.split(/,\s?/).any? { |included| tag == included }
-      end
+    if @excluded_tags
+      return false unless (Set.new(@excluded_tags.split(/,\s?/)) & tags).empty?
     end
 
-    ok
+    if @included_tags
+      return false if (Set.new(@included_tags.split(/,\s?/)) & tags).empty?
+    end
+
+    true
   end
 end

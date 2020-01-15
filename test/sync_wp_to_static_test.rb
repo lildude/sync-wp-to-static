@@ -230,7 +230,7 @@ class SyncWpToStaticRunTest < Minitest::Test
         format: 'aside',
         type: 'post',
         date: '2019-11-08T16:33:20',
-        content: { rendered: 'Post content #run' }
+        content: { rendered: 'Post content #run #fooBar' }
       },
       {
         id: 102,
