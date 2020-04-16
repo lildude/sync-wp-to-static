@@ -5,7 +5,7 @@ AllCops:
   ExtraDetails: true
 
 Metrics/AbcSize:
-  Max: 30
+  Max: 35
 
 Metrics/BlockLength:
   Max: 35
@@ -13,14 +13,16 @@ Metrics/BlockLength:
 Metrics/LineLength:
   AllowURI: true
   Max: 130
+  Exclude:
+    - 'test/**/*'
 
 Metrics/MethodLength:
-  Max: 20
+  Max: 25
   Exclude:
     - 'test/**/*'
 
 Metrics/ClassLength:
-  Max: 150
+  Max: 180
   Exclude:
     - 'test/**/*'
 

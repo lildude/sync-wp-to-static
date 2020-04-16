@@ -100,6 +100,51 @@ class SyncWpToStaticMethodsTest < Minitest::Test
     refute SyncWpToStatic.new.send(:repo_has_post?, 'FOOOBAAR')
   end
 
+  def test_extract_images
+    markdown_content = <<~END_OF_MARKDOWN
+      ![alt](https://site.files.wordpress.com/2010/01/14/img.jpg?w=600;h=400)
+
+      [![ano-alt](https://site.files.wordpress.com/2010/01/14/ano-img.jpg?w=600;h=400)](https://site.files.wordpress.com/2010/01/14/ano-img.jpg)
+
+      Some test with a [link](https://example.com)
+    END_OF_MARKDOWN
+
+    expected = { 'img.jpg' => 'https://site.files.wordpress.com/2010/01/14/img.jpg', 'ano-img.jpg' => 'https://site.files.wordpress.com/2010/01/14/ano-img.jpg' }
+    assert_equal expected, SyncWpToStatic.new.send(:extract_images, markdown_content)
+  end
+
+  def test_replace_images
+    imgs = { 'img.jpg' => 'https://site.files.wordpress.com/2010/01/14/img.jpg', 'ano-img.jpg' => 'https://site.files.wordpress.com/2010/01/14/ano-img.jpg' }
+    markdown_content = <<~END_OF_MARKDOWN2
+      ![alt](https://site.files.wordpress.com/2010/01/14/img.jpg?w=600;h=400)
+
+      [![ano-alt](https://site.files.wordpress.com/2010/01/14/ano-img.jpg?w=600;h=400)](https://site.files.wordpress.com/2010/01/14/ano-img.jpg)
+
+      Some test with a [link](https://example.com)
+    END_OF_MARKDOWN2
+
+    expected = <<~END_OF_EXPECTED
+      ![alt](/img/img.jpg)
+
+      ![ano-alt](/img/ano-img.jpg)
+
+      Some test with a [link](https://example.com)
+    END_OF_EXPECTED
+
+    ENV['INPUT_IMGS_PATH'] = 'img'
+    assert_equal expected, SyncWpToStatic.new.send(:replace_images, markdown_content, imgs)
+  end
+
+  def test_download_and_encode_imgs
+    imgs = { 'img.png' => 'https://site.files.wordpress.com/2010/01/14/img.png' }
+    stub_request(:get, 'https://site.files.wordpress.com/2010/01/14/img.png')
+      .to_return(status: 200, body: File.read(File.join(File.dirname(__FILE__), 'fixtures/img.png')))
+
+    expected = { 'img/img.png' => "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEX/TQBc\nNTh/AAAACklEQVR4nGNiAAAABgADNjd8qAAAAABJRU5ErkJggg==\n" }
+    ENV['INPUT_IMGS_PATH'] = 'img'
+    assert_equal expected, SyncWpToStatic.new.send(:download_and_encode_imgs, imgs)
+  end
+
   def test_render_template
     faux_post = JSON.parse(
       {
@@ -257,7 +302,10 @@ class SyncWpToStaticRunTest < Minitest::Test
         format: 'post',
         type: 'post',
         date: '2019-11-09T15:31:19',
-        content: { rendered: 'Post content without tags and with title.' }
+        content: {
+          rendered:
+          '<p>Post content with an image <a href="http://example.com/file/img.jpg"><img alt="img alt" src="http://example.com/file/img.jpg?w=600&h=600">.</p>'
+        }
       }
     ]
   end
@@ -287,6 +335,8 @@ class SyncWpToStaticRunTest < Minitest::Test
         status: 200, headers: { 'Content-Type' => 'application/json' },
         body: JSON.generate(total_count: 0)
       )
+    stub_request(:get, 'http://example.com/file/img.jpg')
+      .to_return(status: 200, body: 'pretend_img_bin_data')
     # Stub add_files_to_repo and delete_wp_posts - we test these above so don't care about their behaviour right now
     runit = SyncWpToStatic.new
     runit.expects(:add_files_to_repo).returns
@@ -327,6 +377,8 @@ class SyncWpToStaticRunTest < Minitest::Test
         headers: { 'Content-Type' => 'application/json' },
         body: JSON.generate(total_count: 0)
       )
+    stub_request(:get, 'http://example.com/file/img.jpg')
+      .to_return(status: 200, body: 'pretend_img_bin_data')
     # Stub add_files_to_repo and delete_wp_posts (and ENV) - we test these above so don't care about their behaviour right now
     Object.stub_const(:ENV, ENV.to_hash.merge('INPUT_EXCLUDE_TAGGED' => 'run, tech')) do
       runit = SyncWpToStatic.new

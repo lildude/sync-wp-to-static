@@ -19,6 +19,7 @@ class SyncWpToStatic
     @included_tags = ENV['INPUT_INCLUDE_TAGGED']
     @post_template = ENV['INPUT_POST_TEMPLATE']
     @posts_path = ENV['INPUT_POSTS_PATH']
+    @imgs_path = ENV['INPUT_IMGS_PATH']
     @wordpress_endpoint = ENV['INPUT_WORDPRESS_ENDPOINT']
     @wordpress_token = ENV['INPUT_WORDPRESS_TOKEN']
   end
@@ -41,7 +42,13 @@ class SyncWpToStatic
       # Next if we have a post in GitHub repo already
       next if repo_has_post?(post_filename)
 
-      markdown_files[post_filename] = Base64.encode64(render_template(post))
+      rendered_content = render_template(post)
+      imgs = extract_images(rendered_content)
+      rendered_content = replace_images(rendered_content, imgs)
+      markdown_files["#{@posts_path}/#{post_filename}"] = Base64.encode64(rendered_content)
+
+      markdown_files.merge(download_and_encode_imgs(imgs)) unless imgs.empty?
+
       wp_pids << post.id
     end
 
@@ -121,6 +128,42 @@ class SyncWpToStatic
     true
   end
 
+  # Parses the markdown and extracts all image URLs up to a ? if it occurs in the URL - we don't want the resized img
+  # Returns a hash of each filename => original url
+  def extract_images(markdown_content)
+    imgs = {}
+    urls = markdown_content.scan(/\!\[[^\]]+\]\(([^?)]+)[^)]*\)/).flatten
+    urls.each do |u|
+      filename = URI(u).path.split('/').last
+      imgs[filename] = u
+    end
+    imgs
+  end
+
+  # Replace images with domainless paths. I also strip out links of image
+  def replace_images(markdown_content, imgs)
+    # Ensure image urls don't have queries
+    new_content = markdown_content.gsub(/\!\[([^\]]+)\]\(([^?)]+)[^)]*\)/, '![\\1](\\2)')
+    # Replace each url
+    imgs.each do |filename, url|
+      new_content.gsub!(url, "/#{@imgs_path}/#{filename}")
+    end
+    # Remove linking of images
+    new_content.gsub(/\[(\!\[([^\]]+)\]\(+[^)]+\))\]\([^)]+\)/, '\1')
+  end
+
+  def download_and_encode_imgs(imgs)
+    encoded_files = {}
+    imgs.each do |filename, url|
+      tmpfile = Tempfile.new(filename)
+      File.open(tmpfile, 'wb') do |f|
+        f.write HTTParty.get(url).body
+      end
+      encoded_files["#{@imgs_path}/#{filename}"] = Base64.encode64(tmpfile.read)
+    end
+    encoded_files
+  end
+
   def render_template(post)
     render_binding = binding
     content = post.content.rendered
@@ -139,7 +182,7 @@ class SyncWpToStatic
 
     new_tree = files.map do |path, content|
       Hash(
-        path: "#{@posts_path}/#{path}",
+        path: path,
         mode: '100644',
         type: 'blob',
         sha: client.create_blob(@github_repo, content, 'base64')
