@@ -115,6 +115,7 @@ class SyncWpToStatic
       if rendered_title.empty?
         date.strftime('%s').to_i % (24 * 60 * 60)
       else
+        # TODO: Should slugify the first 5 words of the content instead
         rendered_title.downcase.gsub('/[\s.\/_]/', ' ').gsub(/[^\w\s-]/, '').squeeze(' ').tr(' ', '-').chomp('-')
       end
 
