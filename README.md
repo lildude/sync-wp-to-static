@@ -59,7 +59,7 @@ sync_wp_to_static:
       uses: actions/checkout@v1
     - name: Sync Posts
       uses: lildude/sync-wp-to-static@v1
-      with:
+      env:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         post_template: template.erb
         posts_path: _posts
